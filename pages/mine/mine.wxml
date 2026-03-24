@@ -1,0 +1,18 @@
+<view class="container">
+  <view class="user-info">
+    <image class="user-avatar" src="{{userInfo.avatar}}" mode="aspectFill"></image>
+    <text class="user-nickname">{{userInfo.nickname}}</text>
+  </view>
+  <view class="action-buttons">
+    <view wx:if="{{isMerchant && isValid}}" class="btn-shop" bindtap="onShopTap">
+      <text class="btn-text">我的店铺</text>
+      <text class="btn-days">剩余 {{remainingDays}} 天</text>
+    </view>
+    <view wx:if="{{isMerchant && isValid}}" class="btn-renew" bindtap="onRenewTap">
+      <text>续费</text>
+    </view>
+    <view wx:else class="btn-join" bindtap="onJoinTap">
+      <text>入驻平台</text>
+    </view>
+  </view>
+</view>

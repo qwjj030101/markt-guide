@@ -1,0 +1,9 @@
+{
+  "name": "cron",
+  "version": "1.0.0",
+  "description": "定时任务（过期降级、数据清理）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

@@ -1,0 +1,48 @@
+.container {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  padding: 40rpx 30rpx;
+}
+
+.package-card {
+  background-color: #fff;
+  border-radius: 20rpx;
+  padding: 60rpx 40rpx;
+  text-align: center;
+  margin-bottom: 40rpx;
+}
+
+.package-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 30rpx;
+}
+
+.package-price {
+  font-size: 56rpx;
+  font-weight: bold;
+  color: #3cc51f;
+  margin-bottom: 20rpx;
+}
+
+.package-desc {
+  font-size: 28rpx;
+  color: #666;
+  line-height: 1.6;
+}
+
+.pay-btn {
+  height: 90rpx;
+  background-color: #3cc51f;
+  border-radius: 45rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pay-btn text {
+  color: #fff;
+  font-size: 32rpx;
+  font-weight: bold;
+}

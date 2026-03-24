@@ -1,0 +1,10 @@
+<view class="container">
+  <view class="package-card">
+    <view class="package-title">年度会员</view>
+    <view class="package-price">¥{{price}}/年</view>
+    <view class="package-desc">开通后即可展示商铺、响应采购需求</view>
+  </view>
+  <view class="pay-btn" bindtap="onPay">
+    <text>立即支付</text>
+  </view>
+</view>

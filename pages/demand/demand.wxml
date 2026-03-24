@@ -1,0 +1,33 @@
+<view class="container">
+  <view class="banner">
+    <swiper indicator-dots autoplay circular>
+      <swiper-item wx:for="{{banners}}" wx:key="id">
+        <image src="{{item.image}}" mode="aspectFill" bindtap="onBannerTap" data-link="{{item.link}}"></image>
+      </swiper-item>
+    </swiper>
+  </view>
+  <view class="page-title">{{pageTitle}}</view>
+  <view class="demand-list">
+    <view class="demand-item" wx:for="{{demandList}}" wx:key="id">
+      <view class="demand-header">
+        <image class="user-avatar" src="{{item.userAvatar}}" mode="aspectFill"></image>
+        <text class="user-nickname">{{item.userNickname}}</text>
+      </view>
+      <view class="demand-content">{{item.content}}</view>
+      <view class="response-list">
+        <view class="response-item" wx:for="{{item.responses}}" wx:for-item="response" wx:key="shopId" bindtap="onResponseTap" data-shop-id="{{response.shopId}}">
+          <image class="response-avatar" src="{{response.shopAvatar}}" mode="aspectFill"></image>
+          <text class="response-remark">{{response.remark}}</text>
+        </view>
+        <text class="more-response" wx:if="{{item.responseCount > 3}}">...等{{item.responseCount}}人响应</text>
+      </view>
+      <view class="demand-actions">
+        <button wx:if="{{item.isOwn}}" class="btn-complete" bindtap="onComplete" data-id="{{item.id}}">已完成</button>
+        <button wx:elif="{{item.canRespond}}" class="btn-respond" bindtap="onRespond" data-id="{{item.id}}">我有货</button>
+      </view>
+    </view>
+  </view>
+  <view class="publish-btn" wx:if="{{!isMerchant}}" bindtap="onPublish">
+    <text>发布需求</text>
+  </view>
+</view>

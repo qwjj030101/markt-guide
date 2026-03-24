@@ -1,0 +1,36 @@
+<view class="container">
+  <view class="shop-card">
+    <image class="shop-bg" src="{{shopInfo.avatar}}" mode="aspectFill"></image>
+    <view class="shop-info">
+      <view class="shop-header">
+        <text class="shop-name">{{shopInfo.name}}</text>
+        <image class="edit-icon" src="/images/icon_edit.png" mode="aspectFit" bindtap="onEditTap"></image>
+      </view>
+      <view class="shop-detail">
+        <text class="detail-item" bindtap="onPhoneTap">
+          <text class="label">电话：</text>
+          <text class="value">{{shopInfo.phone}}</text>
+        </text>
+        <text class="detail-item" bindtap="onAddressTap">
+          <text class="label">地址：</text>
+          <text class="value">{{shopInfo.address}}</text>
+        </text>
+        <text class="detail-item">
+          <text class="label">营业时间：</text>
+          <text class="value">{{shopInfo.businessHours}}</text>
+        </text>
+      </view>
+      <text class="shop-desc">{{shopInfo.description}}</text>
+    </view>
+  </view>
+  <view class="product-list">
+    <view class="section-title">商品列表</view>
+    <view class="product-item" wx:for="{{productList}}" wx:key="id">
+      <image class="product-image" src="{{item.image}}" mode="aspectFill"></image>
+      <text class="product-name">{{item.name}}</text>
+    </view>
+    <view class="add-product-btn" bindtap="onAddProductTap">
+      <text>+</text>
+    </view>
+  </view>
+</view>

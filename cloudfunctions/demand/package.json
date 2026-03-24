@@ -1,0 +1,9 @@
+{
+  "name": "demand",
+  "version": "1.0.0",
+  "description": "需求发布、列表、完成、响应",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

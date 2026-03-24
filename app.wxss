@@ -1,0 +1,299 @@
+/* 全局样式模板 */
+
+/* ========== 全局样式重置 ========== */
+/* 
+  为什么要重置？
+  微信小程序里，不同组件（如按钮、输入框）有自己的默认样式（边距、边框等）。
+  如果不统一重置，可能会导致页面布局参差不齐，难以控制。
+  但因为通配符 * 在微信小程序里不支持，所以我们改为“显式重置”——
+  列出所有可能用到的标签，统一清零，保证基础样式一致。
+*/
+
+/* 
+  重置哪些标签？
+  这里列出的是微信小程序中常用的内置组件标签。
+  如果你以后用了其他标签（比如 form、label 等），也可以手动加进去。
+  注意：button 和 input 被暂时注释掉了，因为它们自带交互样式，
+  如果你还没有给它们写好自定义类（如 .btn、.form-input），
+  最好先保留默认样式，避免它们变得光秃秃的。
+*/
+view,text,image,scroll-view,swiper,navigator,icon,progress,checkbox,radio,slider,switch,video,canvas,map,web-view
+/* 如果你确定想重置按钮和输入框，可以取消下面两行的注释 */
+/* ,button */
+/* ,input */
+{
+  /* 清除内外边距：让每个组件都从0开始，方便后续用类来控制间距 */
+  margin: 0;
+  padding: 0;
+
+  /* 盒模型统一为 border-box：width/height 包含内边距和边框，布局更可控 */
+  box-sizing: border-box;
+}
+/* 通用变量 */
+:root {
+  --primary-color: #1989fa;
+  --secondary-color: #ff9c07;
+  --text-color: #303133;
+  --text-color-secondary: #606266;
+  --border-color: #e4e7ed;
+  --background-color: #f5f7fa;
+  --white: #ffffff;
+  --success-color: #67c23a;
+  --warning-color: #e6a23c;
+  --danger-color: #f56c6c;
+  --info-color: #909399;
+}
+
+/* 基础布局 */
+.container {
+  min-height: 100vh;
+  background-color: var(--background-color);
+  padding-bottom: 100rpx;
+}
+
+/* 安全区域 */
+.safe-area {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* 卡片样式 */
+.card {
+  background-color: var(--white);
+  border-radius: 12rpx;
+  padding: 20rpx;
+  margin: 20rpx;
+  box-shadow: 0 2rpx 12rpx 0 rgba(0, 0, 0, 0.1);
+}
+
+/* 排版样式 */
+.text-primary {
+  color: var(--primary-color);
+}
+
+.text-secondary {
+  color: var(--text-color-secondary);
+}
+
+.text-success {
+  color: var(--success-color);
+}
+
+.text-warning {
+  color: var(--warning-color);
+}
+
+.text-danger {
+  color: var(--danger-color);
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.font-bold {
+  font-weight: bold;
+}
+
+.font-normal {
+  font-weight: normal;
+}
+
+.font-sm {
+  font-size: 24rpx;
+}
+
+.font-base {
+  font-size: 28rpx;
+}
+
+.font-lg {
+  font-size: 32rpx;
+}
+
+.font-xl {
+  font-size: 36rpx;
+}
+
+/* 间距样式 */
+.mt-1 {
+  margin-top: 10rpx;
+}
+
+.mt-2 {
+  margin-top: 20rpx;
+}
+
+.mt-3 {
+  margin-top: 30rpx;
+}
+
+.mb-1 {
+  margin-bottom: 10rpx;
+}
+
+.mb-2 {
+  margin-bottom: 20rpx;
+}
+
+.mb-3 {
+  margin-bottom: 30rpx;
+}
+
+.ml-1 {
+  margin-left: 10rpx;
+}
+
+.ml-2 {
+  margin-left: 20rpx;
+}
+
+.mr-1 {
+  margin-right: 10rpx;
+}
+
+.mr-2 {
+  margin-right: 20rpx;
+}
+
+.p-1 {
+  padding: 10rpx;
+}
+
+.p-2 {
+  padding: 20rpx;
+}
+
+.p-3 {
+  padding: 30rpx;
+}
+
+/* 按钮样式 */
+.btn {
+  display: inline-block;
+  padding: 20rpx 40rpx;
+  border-radius: 8rpx;
+  font-size: 28rpx;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  color: var(--white);
+}
+
+.btn-primary:active {
+  opacity: 0.8;
+}
+
+.btn-secondary {
+  background-color: var(--secondary-color);
+  color: var(--white);
+}
+
+.btn-outline {
+  background-color: transparent;
+  border: 2rpx solid var(--primary-color);
+  color: var(--primary-color);
+}
+
+/* 表单样式 */
+.form-group {
+  margin-bottom: 20rpx;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 10rpx;
+  font-weight: bold;
+  color: var(--text-color);
+}
+
+.form-input {
+  width: 100%;
+  padding: 20rpx;
+  border: 2rpx solid var(--border-color);
+  border-radius: 8rpx;
+  font-size: 28rpx;
+  background-color: var(--white);
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+/* 加载状态 */
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40rpx;
+}
+
+/* 空状态 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 80rpx 20rpx;
+  text-align: center;
+}
+
+.empty-state-icon {
+  font-size: 80rpx;
+  color: var(--info-color);
+  margin-bottom: 20rpx;
+}
+
+.empty-state-text {
+  color: var(--text-color-secondary);
+  font-size: 28rpx;
+}
+
+/* 响应式布局 */
+@media (max-width: 750rpx) {
+  .container {
+    padding: 0 20rpx;
+  }
+}
+
+/* 动画效果 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* 阴影效果 */
+.shadow-sm {
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.08);
+}
+
+.shadow {
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.12);
+}
+
+.shadow-lg {
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.16);
+}

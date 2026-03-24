@@ -1,0 +1,116 @@
+.container {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  padding-bottom: 120rpx;
+}
+
+.form-section {
+  background-color: #fff;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+}
+
+.form-item {
+  margin-bottom: 30rpx;
+}
+
+.label {
+  display: block;
+  font-size: 28rpx;
+  color: #333;
+  margin-bottom: 15rpx;
+}
+
+.input {
+  width: 100%;
+  height: 80rpx;
+  background-color: #f5f5f5;
+  border-radius: 10rpx;
+  padding: 0 20rpx;
+  font-size: 28rpx;
+}
+
+.image-upload {
+  width: 200rpx;
+  height: 200rpx;
+  background-color: #f5f5f5;
+  border-radius: 10rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.image-upload image {
+  width: 100%;
+  height: 100%;
+}
+
+.image-upload text {
+  font-size: 28rpx;
+  color: #999;
+}
+
+.product-list {
+  padding: 20rpx;
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 20rpx;
+  padding: 0 10rpx;
+}
+
+.product-item {
+  display: flex;
+  align-items: center;
+  background-color: #fff;
+  padding: 20rpx;
+  margin-bottom: 20rpx;
+  border-radius: 10rpx;
+}
+
+.product-image {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 10rpx;
+  margin-right: 20rpx;
+}
+
+.product-name {
+  flex: 1;
+  font-size: 30rpx;
+  color: #333;
+}
+
+.delete-btn {
+  padding: 10rpx 20rpx;
+  background-color: #ff4444;
+  border-radius: 5rpx;
+}
+
+.delete-btn text {
+  color: #fff;
+  font-size: 24rpx;
+}
+
+.submit-btn {
+  position: fixed;
+  bottom: 30rpx;
+  left: 30rpx;
+  right: 30rpx;
+  height: 90rpx;
+  background-color: #3cc51f;
+  border-radius: 45rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.submit-btn text {
+  color: #fff;
+  font-size: 32rpx;
+  font-weight: bold;
+}

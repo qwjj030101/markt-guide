@@ -1,0 +1,41 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/demand/demand",
+    "pages/mine/mine",
+    "pages/shop/detail",
+    "pages/shop/manage",
+    "pages/join/join",
+    "pages/pay/pay",
+    "pages/shop/edit",
+    "pages/product/edit"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#fff",
+    "navigationBarTitleText": "市场导购",
+    "navigationBarTextStyle": "black"
+  },
+  "tabBar": {
+    "color": "#7A7E83",
+    "selectedColor": "#3cc51f",
+    "borderStyle": "black",
+    "backgroundColor": "#ffffff",
+    "list": [
+      {
+      "pagePath": "pages/index/index",
+      "text": "首页"
+    },
+    {
+      "pagePath": "pages/demand/demand",
+      "text": "需求"
+    },
+    {
+      "pagePath": "pages/mine/mine",
+      "text": "我的"
+    }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

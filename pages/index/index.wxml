@@ -1,0 +1,32 @@
+<view class="container">
+  <view class="search-bar">
+    <input placeholder="搜索商铺名称" bindinput="onSearchInput" />
+  </view>
+  <view class="banner">
+    <swiper indicator-dots autoplay circular>
+      <swiper-item wx:for="{{banners}}" wx:key="id">
+        <image src="{{item.image}}" mode="aspectFill" bindtap="onBannerTap" data-link="{{item.link}}"></image>
+      </swiper-item>
+    </swiper>
+  </view>
+  <view class="filter-bar">
+    <view class="filter-item">
+      <text>市场</text>
+      <picker mode="selector" range="{{marketTypes}}" bindchange="onMarketChange">
+        <text>{{selectedMarket || '全部'}}</text>
+      </picker>
+    </view>
+    <view class="filter-item">
+      <text>类型</text>
+      <picker mode="selector" range="{{shopTypes}}" bindchange="onShopTypeChange">
+        <text>{{selectedShopType || '全部'}}</text>
+      </picker>
+    </view>
+  </view>
+  <view class="shop-list">
+    <view class="shop-item" wx:for="{{shopList}}" wx:key="id" bindtap="onShopTap" data-id="{{item.id}}">
+      <image class="shop-avatar" src="{{item.avatar}}" mode="aspectFill"></image>
+      <text class="shop-name">{{item.name}}</text>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,36 @@
+<view class="container">
+  <view class="form-section">
+    <view class="form-item">
+      <text class="label">商铺头像</text>
+      <view class="avatar-upload" bindtap="onAvatarTap">
+        <image wx:if="{{formData.avatar}}" src="{{formData.avatar}}" mode="aspectFill"></image>
+        <text wx:else>点击上传</text>
+      </view>
+    </view>
+    <view class="form-item">
+      <text class="label">商铺名称</text>
+      <input class="input" value="{{formData.name}}" bindinput="onNameInput" placeholder="请输入商铺名称" />
+    </view>
+    <view class="form-item">
+      <text class="label">商铺电话</text>
+      <input class="input" value="{{formData.phone}}" bindinput="onPhoneInput" placeholder="请输入商铺电话" />
+    </view>
+    <view class="form-item">
+      <text class="label">商铺地址</text>
+      <view class="address-picker" bindtap="onAddressTap">
+        <text class="address-text">{{formData.address || '请选择地址'}}</text>
+      </view>
+    </view>
+    <view class="form-item">
+      <text class="label">营业时间</text>
+      <input class="input" value="{{formData.businessHours}}" bindinput="onBusinessHoursInput" placeholder="请输入营业时间" />
+    </view>
+    <view class="form-item">
+      <text class="label">商铺简介</text>
+      <textarea class="textarea" value="{{formData.description}}" bindinput="onDescriptionInput" placeholder="请输入商铺简介" />
+    </view>
+  </view>
+  <view class="submit-btn" bindtap="onSubmit">
+    <text>保存</text>
+  </view>
+</view>
