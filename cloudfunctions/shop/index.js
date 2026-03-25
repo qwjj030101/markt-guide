@@ -14,12 +14,54 @@ cloud.init({
 const db = cloud.database()
 const _ = db.command
 
+// 分类数据缓存
+let categoryCache = {
+  market: {},
+  shop_category: {}
+}
+
+// 加载分类数据到缓存
+async function loadCategoryCache() {
+  console.log('开始加载分类数据缓存...')
+  try {
+    const categoryRes = await db.collection('category').get()
+    console.log('从数据库查询到的分类数据:', categoryRes.data)
+    
+    categoryCache = {
+      market: {},
+      shop_category: {}
+    }
+    
+    categoryRes.data.forEach(cat => {
+      if (cat.type === 'market' || cat.type === 'shop_category') {
+        categoryCache[cat.type][cat.sort] = cat._id
+        console.log(`添加到缓存: type=${cat.type}, sort=${cat.sort}, _id=${cat._id}`)
+      }
+    })
+    
+    console.log('分类数据缓存加载成功:', categoryCache)
+  } catch (err) {
+    console.error('分类数据缓存加载失败:', err)
+  }
+}
+
+// 初始化时加载缓存（云函数冷启动时执行）
+loadCategoryCache()
+
+// 定时更新缓存（每5分钟）
+setInterval(loadCategoryCache, 5 * 60 * 1000)
+
 // 主入口函数
 exports.main = async (event, context) => {
   const { action } = event
   
+  // 每次都重新加载缓存（临时测试用）
+  //await loadCategoryCache()
+  
   try {
     switch (action) {
+      case 'list':
+        return await getShopList(event)
       case 'getList':
         return await getShopList(event)
       case 'getDetail':
@@ -52,37 +94,85 @@ exports.main = async (event, context) => {
  * @param {Object} params - 查询参数
  */
 async function getShopList(params) {
-  const { marketType, shopType, keyword, page = 1, pageSize = 10 } = params
+   const { page = 1, limit = 10, keyword, market_type, shop_category } = params
+  
+  console.log('传入的参数:', { market_type, shop_category })
+  console.log('当前缓存:', categoryCache)
   
   let where = {
-    status: 1  // 只显示有效商铺
-  }
-  
-  if (marketType) {
-    where.market_type = marketType
-  }
-  
-  if (shopType) {
-    where.shop_type = shopType
+     status: 1,  // 临时注释
+     expire_date: _.gt(new Date())  // 临时注释
   }
   
   if (keyword) {
     where.name = db.RegExp({
       regexp: keyword,
-      options: 'i'
+      options: 'i'  // 不区分大小写
     })
   }
   
+  // 处理 market_type 参数
+  if (market_type) {
+    try {
+      if (typeof market_type === 'string' && market_type.length > 10) {
+        // 如果传入的是 _id（长字符串），从缓存中查找对应的数字值
+        const marketSort = Object.keys(categoryCache.market).find(sort => categoryCache.market[sort] === market_type)
+        if (marketSort) {
+          where.market_type = parseInt(marketSort)
+          console.log('从缓存获取数字值:', marketSort)
+        } else {
+          console.log('缓存中没有找到对应的数字值:', market_type)
+        }
+      } else {
+        // 如果传入的是数字，直接使用
+        where.market_type = parseInt(market_type)
+        console.log('直接使用数字值:', market_type)
+      }
+    } catch (err) {
+      console.error('处理 market_type 时出错:', err)
+    }
+  }
+  
+  // 处理 shop_category 参数
+  if (shop_category) {
+    try {
+      if (typeof shop_category === 'string' && shop_category.length > 10) {
+        // 如果传入的是 _id（长字符串），从缓存中查找对应的数字值
+        const categorySort = Object.keys(categoryCache.shop_category).find(sort => categoryCache.shop_category[sort] === shop_category)
+        if (categorySort) {
+          where.category_type = parseInt(categorySort)
+          console.log('从缓存获取数字值:', categorySort)
+        } else {
+          console.log('缓存中没有找到对应的数字值:', shop_category)
+        }
+      } else {
+        // 如果传入的是数字，直接使用
+        where.category_type = parseInt(shop_category)
+        console.log('直接使用数字值:', shop_category)
+      }
+    } catch (err) {
+      console.error('处理 shop_category 时出错:', err)
+    }
+  }
+  
+  console.log('最终查询条件:', where)
+  
   const shopRes = await db.collection('shop')
     .where(where)
-    .skip((page - 1) * pageSize)
-    .limit(pageSize)
+    .skip((page - 1) * limit)
+    .limit(limit)
     .get()
   
+  const countRes = await db.collection('shop')
+    .where(where)
+    .count()
+  
+  console.log('查询结果数量:', shopRes.data.length)
+  
   return {
-    code: 0,
-    message: '获取成功',
-    data: shopRes.data
+    success: true,
+    data: shopRes.data,
+    total: countRes.total
   }
 }
 

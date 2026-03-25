@@ -48,12 +48,39 @@
 
 /* 筛选项 */
 .filter-item {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 20rpx;
+  background-color: #f8f8f8;      /* 浅灰色背景 */
+  border-radius: 40rpx;           /* 大圆角，更像按钮 */
+  padding: 12rpx 20rpx;           /* 内边距，让点击区域更大 */
+  margin: 0 12rpx;                /* 项之间的间距 */
+  border: 1rpx solid #e0e0e0;     /* 浅边框，增加立体感 */
+  box-shadow: 0 2rpx 4rpx rgba(0,0,0,0.05); /* 轻微阴影，浮起效果 */
+  display: inline-flex;           /* 让内部元素横向排列 */
+  align-items: center;            /* 垂直居中 */
+}
+
+/* 标签文字样式（比如“市场”、“类型”） */
+.filter-item text {
   font-size: 28rpx;
+  color: #666;
+  margin-right: 8rpx;
+}
+
+/* 选中的值（比如“全部”、“A区”）的样式 */
+.filter-item picker text {
+  font-size: 28rpx;
+  color: #007aff;                 /* 蓝色，突出显示 */
+  font-weight: 500;
+  margin-left: 4rpx;
+}
+
+/* 为每个筛选项添加向下箭头图标 */
+.filter-item::after {
+  content: "▼";
+  font-size: 20rpx;
+  color: #999;
+  margin-left: 8rpx;
+  display: inline-block;
+  transition: transform 0.2s;
 }
 
 /* 商店列表 */

@@ -8,13 +8,13 @@ exports.main = async (event, context) => {
   // 定义分类数据
   const categories = [
     // 市场分类
-    { type: 'market', name: 'A区', sort: 1 },
+    { type: 'market', name: 'A区', sort:1 },
     { type: 'market', name: 'B区', sort: 2 },
     { type: 'market', name: 'C区', sort: 3 },
     // 商铺类型
-    { type: 'shop', name: '服装', sort: 1 },
-    { type: 'shop', name: '电子', sort: 2 },
-    { type: 'shop', name: '餐饮', sort: 3 }
+    { type: 'shop_category', name: '服装', sort:1 },
+    { type: 'shop_category', name: '电子', sort: 2 },
+    { type: 'shop_category', name: '餐饮', sort: 3 }
   ];
 
   let insertedCount = 0;

@@ -12,14 +12,14 @@
   <view class="filter-bar">
     <view class="filter-item">
       <text>市场</text>
-      <picker mode="selector" range="{{marketTypes}}" bindchange="onMarketChange">
-        <text>{{selectedMarket || '全部'}}</text>
+      <picker mode="selector" range="{{marketTypes}}" range-key="name" bindchange="onMarketChange">
+        <text>{{selectedMarketName || '全部'}}</text>
       </picker>
     </view>
     <view class="filter-item">
       <text>类型</text>
-      <picker mode="selector" range="{{shopTypes}}" bindchange="onShopTypeChange">
-        <text>{{selectedShopType || '全部'}}</text>
+      <picker mode="selector" range="{{shopTypes}}" range-key="name" bindchange="onShopTypeChange">
+        <text>{{selectedShopTypeName || '全部'}}</text>
       </picker>
     </view>
   </view>
