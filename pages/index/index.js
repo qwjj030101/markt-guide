@@ -177,20 +177,23 @@ Page({
     console.log('返回的商铺数量:', res.result.data.length)
     console.log('返回的商铺列表:', res.result.data)
     
-    if (res.result.success) {
-      const newShopList = this.data.shopList.concat(res.result.data)
-      console.log('新的商铺列表:', newShopList)
-      
-      this.setData({
-        shopList: newShopList,
-        hasMore: res.result.data.length >= 10
-      })
-    } else {
-      wx.showToast({
-        title: '加载失败',
-        icon: 'none'
-      })
-    }
+   if (res.result.success) {
+  // 直接使用云函数返回的临时URL，不再需要前端转换
+  // 原因：云函数已经在返回前将云存储file ID转换为临时URL
+  const newShopList = this.data.shopList.concat(res.result.data)
+  console.log('新的商铺列表:', newShopList)
+  console.log('第一个店铺的头像:', newShopList[0]?.avatar)
+  
+  this.setData({
+    shopList: newShopList,
+    hasMore: res.result.data.length >= 10
+  })
+} else {
+  wx.showToast({
+    title: '加载失败',
+    icon: 'none'
+  })
+}
   } catch (err) {
     console.error('加载商铺失败:', err)
     wx.showToast({

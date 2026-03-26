@@ -5,10 +5,10 @@ const db = cloud.database();
 
 // 要导入的商铺数据（只保留有效部分，省略 id 和 _id）
 const shopsData = [
-  { name: "韩都衣舍", avatar: "/images/portrait1.jpg", phone: "13800138001", address: "A区101号", lat: 23.123, lng: 113.456, description: "韩版女装，时尚潮流", market_type: 1, category_type: 1, status: 1, expire_date: new Date("2027-01-01") },
-  { name: "潮流前线", avatar: "/images/portrait2.jpg", phone: "13800138002", address: "A区102号", lat: 23.124, lng: 113.457, description: "休闲男装，商务正装", market_type: 1, category_type: 1, status: 1, expire_date: new Date("2027-01-01") },
-  { name: "数码港", avatar: "/images/portrait3.jpg", phone: "13800138003", address: "B区201号", lat: 23.125, lng: 113.458, description: "手机、电脑、数码配件", market_type: 2, category_type: 2, status: 1, expire_date: new Date("2027-01-01") },
-  { name: "老李餐饮", avatar: "/images/portrait5.jpg", phone: "13800138004", address: "C区301号", lat: 23.126, lng: 113.459, description: "快餐、简餐、外卖", market_type: 3, category_type: 3, status: 1, expire_date: new Date("2027-01-01") },
+  { name: "韩都衣舍", avatar: "cloud://cloud1-9guxzqosc70e21d1.636c-cloud1-9guxzqosc70e21d1-1408904578/portrait1.jpg", phone: "13800138001", address: "A区101号", lat: 23.123, lng: 113.456, description: "韩版女装，时尚潮流", market_type: 1, category_type: 1, status: 1, expire_date: new Date("2027-01-01") },
+  { name: "潮流前线", avatar: "cloud://cloud1-9guxzqosc70e21d1.636c-cloud1-9guxzqosc70e21d1-1408904578/portrait2.jpg", phone: "13800138002", address: "A区102号", lat: 23.124, lng: 113.457, description: "休闲男装，商务正装", market_type: 1, category_type: 1, status: 1, expire_date: new Date("2027-01-01") },
+  { name: "数码港", avatar: "cloud://cloud1-9guxzqosc70e21d1.636c-cloud1-9guxzqosc70e21d1-1408904578/portrait3.jpg", phone: "13800138003", address: "B区201号", lat: 23.125, lng: 113.458, description: "手机、电脑、数码配件", market_type: 2, category_type: 2, status: 1, expire_date: new Date("2027-01-01") },
+  { name: "老李餐饮", avatar: "cloud://cloud1-9guxzqosc70e21d1.636c-cloud1-9guxzqosc70e21d1-1408904578/portrait5.jpg", phone: "13800138004", address: "C区301号", lat: 23.126, lng: 113.459, description: "快餐、简餐、外卖", market_type: 3, category_type: 3, status: 1, expire_date: new Date("2027-01-01") },
   { name: "雅戈尔服饰", avatar: "https://picsum.photos/200/200?random=105", phone: "13800138005", address: "A区103号", lat: 23.127, lng: 113.460, description: "商务男装，衬衫专家", market_type: 1, category_type: 1, status: 1, expire_date: new Date("2027-01-01") },
   { name: "小米之家", avatar: "https://picsum.photos/200/200?random=106", phone: "13800138006", address: "B区202号", lat: 23.128, lng: 113.461, description: "小米手机、智能家居", market_type: 2, category_type: 2, status: 1, expire_date: new Date("2027-01-01") },
   { name: "海底捞火锅", avatar: "https://picsum.photos/200/200?random=107", phone: "13800138007", address: "C区302号", lat: 23.129, lng: 113.462, description: "火锅、川菜", market_type: 3, category_type: 3, status: 1, expire_date: new Date("2027-01-01") },

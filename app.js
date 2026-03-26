@@ -26,9 +26,18 @@ App({
     env: 'cloud1-9guxzqosc70e21d1',  // 替换为你的实际环境ID
     traceUser: true  // 开启用户追踪
   })
-  
+
   // 初始化完成后再调用登录
   this.login()
+  /**
+  *wx.cloud.callFunction({
+  *name: 'seedProductData',
+  *success: res => {
+  *console.log('商品导入结果', res.result);
+  *}
+  *}) 
+*/
+  
   },
 
   /**

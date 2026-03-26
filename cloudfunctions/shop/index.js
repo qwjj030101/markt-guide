@@ -169,9 +169,28 @@ async function getShopList(params) {
   
   console.log('查询结果数量:', shopRes.data.length)
   
+  // 处理店铺头像，将云存储file ID转换为临时URL
+  // 原理：云函数运行在云端，拥有管理员权限，可以访问所有云存储文件
+  // 即使文件权限是"仅创建者可读写"，云函数也能获取到临时URL
+  const processedShops = await Promise.all(shopRes.data.map(async (shop) => {
+    if (shop.avatar && shop.avatar.startsWith('cloud://')) {
+      try {
+        const tempRes = await cloud.getTempFileURL({
+          fileList: [shop.avatar]
+        })
+        if (tempRes.fileList[0].tempFileURL) {
+          shop.avatar = tempRes.fileList[0].tempFileURL
+        }
+      } catch (err) {
+        console.error('获取临时URL失败:', err)
+      }
+    }
+    return shop
+  }))
+  
   return {
     success: true,
-    data: shopRes.data,
+    data: processedShops,
     total: countRes.total
   }
 }
@@ -182,11 +201,26 @@ async function getShopList(params) {
  */
 async function getShopDetail(shopId) {
   const shopRes = await db.collection('shop').doc(shopId).get()
+  const shopInfo = shopRes.data
+  
+  // 处理头像，将云存储file ID转换为临时URL
+  if (shopInfo.avatar && shopInfo.avatar.startsWith('cloud://')) {
+    try {
+      const tempRes = await cloud.getTempFileURL({
+        fileList: [shopInfo.avatar]
+      })
+      if (tempRes.fileList[0].tempFileURL) {
+        shopInfo.avatar = tempRes.fileList[0].tempFileURL
+      }
+    } catch (err) {
+      console.error('获取临时URL失败:', err)
+    }
+  }
   
   return {
     code: 0,
     message: '获取成功',
-    data: shopRes.data
+    data: shopInfo
   }
 }
 

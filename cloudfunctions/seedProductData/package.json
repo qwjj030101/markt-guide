@@ -1,0 +1,9 @@
+{
+  "name": "seedproductdata",
+  "version": "1.0.0",
+  "description": "商品测试数据插入",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

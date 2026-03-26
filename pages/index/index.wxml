@@ -24,7 +24,7 @@
     </view>
   </view>
   <view class="shop-list">
-    <view class="shop-item" wx:for="{{shopList}}" wx:key="id" bindtap="onShopTap" data-id="{{item.id}}">
+    <view class="shop-item" wx:for="{{shopList}}" wx:key="_id" bindtap="onShopTap" data-id="{{item._id}}">
       <image class="shop-avatar" src="{{item.avatar}}" mode="aspectFill"></image>
       <text class="shop-name">{{item.name}}</text>
     </view>
