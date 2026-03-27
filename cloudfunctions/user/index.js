@@ -26,6 +26,8 @@ exports.main = async (event, context) => {
         return await getUserInfo(event.openid)
       case 'checkRole':
         return await checkRole(event.openid)
+      case 'updateUserInfo':
+        return await updateUserInfo(event.openid, event.userInfo)
       default:
         return {
           code: -1,
@@ -47,8 +49,9 @@ exports.main = async (event, context) => {
  * @param {string} code - 微信登录临时凭证
  */
 async function login(code) {
-  // 获取 openid
-  const { OPENID } = await cloud.getOpenId({ code })
+  // 获取 openid（云函数中通过 getWXContext 获取）
+  const wxContext = cloud.getWXContext()
+  const OPENID = wxContext.OPENID
   
   // 查询用户是否存在
   const userRes = await db.collection('user').where({
@@ -137,5 +140,28 @@ async function checkRole(openid) {
       isMerchant: user.role === 1,
       isValid: user.expire_date ? new Date(user.expire_date) > new Date() : false
     }
+  }
+}
+
+/**
+ * 更新用户信息
+ * @param {string} openid - 用户openid
+ * @param {Object} userInfo - 用户信息
+ */
+async function updateUserInfo(openid, userInfo) {
+  // 更新用户信息
+  await db.collection('user').where({
+    openid: openid
+  }).update({
+    data: {
+      nickname: userInfo.nickName,
+      avatar: userInfo.avatarUrl,
+      update_time: db.serverDate()
+    }
+  })
+  
+  return {
+    code: 0,
+    message: '更新成功'
   }
 }

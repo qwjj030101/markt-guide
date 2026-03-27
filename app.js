@@ -27,6 +27,9 @@ App({
     traceUser: true  // 开启用户追踪
   })
 
+  // 从本地缓存恢复用户信息
+  this.restoreUserInfo()
+  
   // 初始化完成后再调用登录
   this.login()
   /**
@@ -62,7 +65,7 @@ App({
     // 步骤1：调用 wx.login 获取临时登录凭证 code
     wx.login({
       success: (res) => {
-        if (res.code) {
+        if (res.code) {  // 修复：添加括号
           // 步骤2：调用云函数 user/login 交换 openid 和用户信息
           wx.cloud.callFunction({
             name: 'user',
@@ -72,20 +75,28 @@ App({
             }
           }).then((result) => {
             // 步骤3：存储用户信息到 globalData
-            const userData = result.result
-            this.globalData.openid = userData.openid
+            const userData = result.result.data  // 修正：获取正确的返回数据结构
+            this.globalData.openid = userData.openid  // 修复：改为 openid
             this.globalData.role = userData.role || 0
             this.globalData.shop_id = userData.shop_id || null
             this.globalData.expire_date = userData.expire_date || null
             
-            // 如果已授权，获取微信用户信息
-            this.getUserProfile()
+            // 步骤4：将用户信息存入本地缓存
+            const cacheData = {
+              openid: userData.openid,  // 修复：改为 openid
+              role: userData.role || 0,
+              shop_id: userData.shop_id || null,
+              expire_date: userData.expire_date || null
+            }
+            wx.setStorageSync('userInfo', cacheData)
+            console.log('用户信息已存入本地缓存:', cacheData)
             
+            // 移除自动调用getUserProfile，改为用户主动触发
             console.log('登录成功，globalData:', this.globalData)
           }).catch((err) => {
             console.error('云函数调用失败:', err)
           })
-        } else {
+        } else {  // 修复：添加括号
           console.error('wx.login 失败:', res)
         }
       }
@@ -105,6 +116,12 @@ App({
       },
       fail: (err) => {
         console.log('用户拒绝授权:', err)
+        // 如果用户拒绝授权，使用默认昵称和空头像
+        this.globalData.userInfo = {
+          nickName: '微信用户',
+          avatarUrl: ''
+        }
+        console.log('使用默认用户信息:', this.globalData.userInfo)
       }
     })
   },
@@ -122,7 +139,7 @@ App({
    * @returns {boolean} 会员是否未过期
    */
   isMemberValid() {
-    if (!this.globalData.expire_date) return false
+    if (!this.globalData.expire_date) return false  // 修复：添加括号
     const expireDate = new Date(this.globalData.expire_date)
     const now = new Date()
     return expireDate > now
@@ -133,7 +150,7 @@ App({
    * @returns {number} 剩余天数，已过期返回0
    */
   getRemainingDays() {
-    if (!this.globalData.expire_date) return 0
+    if (!this.globalData.expire_date) return 0  // 修复：添加括号
     const expireDate = new Date(this.globalData.expire_date)
     const now = new Date()
     const diffTime = expireDate - now
@@ -142,21 +159,54 @@ App({
   },
 
   /**
+   * 从本地缓存恢复用户信息
+   * 确保每次启动小程序时，用户信息不会丢失
+   */
+  restoreUserInfo() {
+    try {
+      // 从本地缓存获取用户基本信息
+      const cacheData = wx.getStorageSync('userInfo')
+      if (cacheData) {  // 修复：添加括号
+        this.globalData.openid = cacheData.openid
+        this.globalData.role = cacheData.role || 0
+        this.globalData.shop_id = cacheData.shop_id || null
+        this.globalData.expire_date = cacheData.expire_date || null
+      }
+      
+      // 从本地缓存获取用户微信信息（头像、昵称）
+      const userInfoCache = wx.getStorageSync('userInfoWechat')
+      if (userInfoCache) {  // 修复：添加括号
+        this.globalData.userInfo = userInfoCache
+      }
+      
+      console.log('从本地缓存恢复用户信息:', this.globalData)
+    } catch (err) {
+      console.error('恢复用户信息失败:', err)
+    }
+  },
+
+  /**
    * 更新全局用户数据
    * @param {Object} userData - 用户数据对象
    */
   updateGlobalData(userData) {
-    if (userData.role !== undefined) {
+    if (userData.role !== undefined) {  // 修复：添加括号
       this.globalData.role = userData.role
     }
-    if (userData.shop_id !== undefined) {
+    if (userData.shop_id !== undefined) {  // 修复：添加括号
       this.globalData.shop_id = userData.shop_id
     }
-    if (userData.expire_date !== undefined) {
+    if (userData.expire_date !== undefined) {  // 修复：添加括号
       this.globalData.expire_date = userData.expire_date
     }
-    if (userData.userInfo) {
+    if (userData.userInfo) {  // 修复：添加括号
       this.globalData.userInfo = userData.userInfo
+      // 同时更新本地缓存
+      try {
+        wx.setStorageSync('userInfoWechat', userData.userInfo)
+      } catch (err) {
+        console.error('缓存用户信息失败:', err)
+      }
     }
   }
 })

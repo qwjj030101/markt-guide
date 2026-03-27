@@ -1,0 +1,3 @@
+<view class="test-container">
+  <text>测试组件</text>
+</view>

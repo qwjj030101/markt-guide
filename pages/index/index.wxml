@@ -3,11 +3,7 @@
     <input placeholder="搜索商铺名称" bindinput="onSearchInput" />
   </view>
   <view class="banner">
-    <swiper indicator-dots autoplay circular>
-      <swiper-item wx:for="{{banners}}" wx:key="id">
-        <image src="{{item.image}}" mode="aspectFill" bindtap="onBannerTap" data-link="{{item.link}}"></image>
-      </swiper-item>
-    </swiper>
+    <swiper-ad banners="{{banners}}" />
   </view>
   <view class="filter-bar">
     <view class="filter-item">

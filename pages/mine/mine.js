@@ -5,12 +5,15 @@
 Page({
   data: {
     userInfo: {
-      avatar: '',    // 用户头像URL
-      nickname: ''   // 用户昵称
+      avatarUrl: '',    // 用户头像URL
+      nickName: ''   // 用户昵称
     },
     isMerchant: false,   // 是否为商户身份
     isValid: false,      // 会员是否有效
-    remainingDays: 0      // 剩余天数
+    remainingDays: 0,     // 剩余天数
+    expireDateFormatted: '', // 格式化后的到期时间
+    isAuthorized: false,  // 是否已授权
+    isAuthorizing: false  // 是否正在授权中
   },
 
   /**
@@ -26,7 +29,33 @@ Page({
    * 每次显示页面时刷新用户信息，确保数据最新
    */
   onShow() {
-    this.loadUserInfo()
+    const app = getApp()
+    const globalUserInfo = app.globalData.userInfo
+    const role = app.globalData.role
+    const expire_date = app.globalData.expire_date
+    const remainingDays = app.getRemainingDays()
+    
+    // 检查是否已授权（是否有用户信息且不是默认值）
+    const isAuthorized = globalUserInfo && (globalUserInfo.nickName !== '微信用户' || globalUserInfo.avatarUrl !== '')
+    const isMerchant = role === 1
+    const isValid = remainingDays > 0
+    const expireDateFormatted = this.formatExpireDate(expire_date)
+    
+    this.setData({
+      userInfo: globalUserInfo || {
+        avatarUrl: '',
+        nickName: ''
+      },
+      isMerchant: isMerchant,
+      isValid: isValid,
+      remainingDays: remainingDays,
+      expireDateFormatted: expireDateFormatted,
+      isAuthorized: isAuthorized  // 判断是否已授权
+    })
+    console.log('加载用户信息:', this.data.userInfo)
+    console.log('授权状态:', isAuthorized)
+    console.log('用户角色:', role, '是否为商户:', isMerchant)
+    console.log('过期时间:', expire_date, '剩余天数:', remainingDays, '是否有效:', isValid, '格式化到期时间:', expireDateFormatted)
   },
 
   /**
@@ -60,26 +89,75 @@ Page({
   },
 
   /**
+   * 授权按钮点击事件
+   * 调用 wx.getUserProfile 获取用户信息
+   */
+  onAuthorizeTap() {
+    // 防止重复点击
+    if (this.data.isAuthorizing) {
+      return
+    }
+    
+    const app = getApp()
+    
+    // 设置授权中状态
+    this.setData({ isAuthorizing: true })
+    
+    // 注意：从2022年11月开始，wx.getUserProfile不再支持获取用户头像和昵称
+    // 这里使用模拟数据来演示，实际项目中可以引导用户手动输入
+    const mockUserInfo = {
+      nickName: '微信用户' + Math.floor(Math.random() * 10000),
+      avatarUrl: '' // 空头像，实际项目中可以使用默认头像
+    }
+    
+    console.log('模拟获取用户信息:', mockUserInfo)
+    
+    // 存储用户信息到globalData
+    app.globalData.userInfo = mockUserInfo
+    
+    // 存储用户信息到本地缓存
+    try {
+      wx.setStorageSync('userInfoWechat', mockUserInfo)
+      console.log('用户信息已存入本地缓存')
+    } catch (err) {
+      console.error('缓存用户信息失败:', err)
+    }
+    
+    // 更新页面数据
+    this.setData({
+      userInfo: mockUserInfo,
+      isAuthorized: true,
+      isAuthorizing: false
+    })
+    
+    console.log('授权完成，用户信息:', mockUserInfo)
+  },
+
+  /**
    * 加载用户信息
-   * 从服务器获取用户详细信息，包括头像、昵称、角色、会员到期时间等
+   * 从 globalData 获取用户详细信息，包括头像、昵称、角色、会员到期时间等
    */
   loadUserInfo() {
-    wx.request({
-      url: 'https://api.example.com/user/info',
-      success: (res) => {
-        const userInfo = res.data
-        const remainingDays = this.calculateRemainingDays(userInfo.expireDate)
-        this.setData({
-          userInfo: {
-            avatar: userInfo.avatar,
-            nickname: userInfo.nickname
-          },
-          isMerchant: userInfo.role === 1,
-          isValid: remainingDays > 0,
-          remainingDays: remainingDays
-        })
-      }
+    const app = getApp()
+    const globalUserInfo = app.globalData.userInfo
+    const role = app.globalData.role
+    const remainingDays = app.getRemainingDays()
+    
+    // 检查是否已授权（是否有用户信息且不是默认值）
+    const isAuthorized = globalUserInfo && (globalUserInfo.nickName !== '微信用户' || globalUserInfo.avatarUrl !== '')
+    
+    this.setData({
+      userInfo: globalUserInfo || {
+        avatarUrl: '',
+        nickName: ''
+      },
+      isMerchant: role === 1,
+      isValid: remainingDays > 0,
+      remainingDays: remainingDays,
+      isAuthorized: isAuthorized  // 判断是否已授权
     })
+    console.log('加载用户信息:', this.data.userInfo)
+    console.log('授权状态:', isAuthorized)
   },
 
   /**
@@ -94,5 +172,127 @@ Page({
     const diffTime = expire - now
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
     return diffDays > 0 ? diffDays : 0
-  }
+  },
+  // 添加头像选择方法
+chooseAvatar() {
+  wx.chooseMedia({
+    count: 1,
+    mediaType: ['image'],
+    sourceType: ['album', 'camera'],
+    success: (res) => {
+      const tempFilePaths = res.tempFiles
+      if (tempFilePaths.length > 0) {
+        const app = getApp()
+        // 存储头像路径到用户信息
+        app.globalData.userInfo.avatarUrl = tempFilePaths[0].tempFilePath
+        // 存储到本地缓存
+        try {
+          wx.setStorageSync('userInfoWechat', app.globalData.userInfo)
+        } catch (err) {
+          console.error('缓存用户信息失败:', err)
+        }
+        // 更新页面数据
+        this.setData({
+          userInfo: app.globalData.userInfo
+        })
+        // 同步到数据库
+        this.updateUserInfoToDB()
+      }
+    }
+  })
+},
+
+// 添加编辑昵称方法
+  editNickname() {
+    const app = getApp()
+    wx.showModal({
+      title: '修改昵称',
+      editable: true,  // 允许输入
+      placeholderText: '请输入你的新昵称',
+      inputValue: this.data.userInfo.nickName,
+      success: (res) => {
+        if (res.confirm) {
+          const nickName = res.content
+          // 存储昵称到用户信息
+          app.globalData.userInfo.nickName = nickName
+          // 存储到本地缓存
+          try {
+            wx.setStorageSync('userInfoWechat', app.globalData.userInfo)
+          } catch (err) {
+            console.error('缓存用户信息失败:', err)
+          }
+          // 更新页面数据
+          this.setData({
+            userInfo: app.globalData.userInfo
+          })
+          // 同步到数据库
+          this.updateUserInfoToDB()
+        }
+      }
+    })
+  },
+
+  // 同步用户信息到数据库
+  updateUserInfoToDB() {
+    const app = getApp()
+    console.log('开始同步用户信息到数据库:', {
+      openid: app.globalData.openid,
+      userInfo: app.globalData.userInfo
+    })
+    
+    if (app.globalData.openid && app.globalData.userInfo) {
+      wx.cloud.callFunction({
+        name: 'user',
+        data: {
+          action: 'updateUserInfo',
+          openid: app.globalData.openid,
+          userInfo: app.globalData.userInfo
+        },
+        success: (res) => {
+          console.log('同步用户信息到数据库成功:', res)
+        },
+        fail: (err) => {
+          console.error('同步用户信息到数据库失败:', err)
+        }
+      })
+    } else {
+      console.error('同步用户信息到数据库失败: 缺少openid或userInfo', {
+        openid: app.globalData.openid,
+        userInfo: app.globalData.userInfo
+      })
+    }
+  },
+
+  // 显示操作菜单
+  showActionSheet() {
+    wx.showActionSheet({
+      itemList: ['修改昵称', '更换头像'],
+      success: (res) => {
+        switch (res.tapIndex) {
+          case 0:
+            // 修改昵称
+            this.editNickname();
+            break;
+          case 1:
+            // 更换头像
+            this.chooseAvatar();
+            break;
+        }
+      }
+    });
+  },
+
+  /**
+   * 格式化过期时间为 xxxx年xx月xx日 格式
+   * @param {string} expireDate - 过期时间
+   * @returns {string} 格式化后的日期字符串
+   */
+  formatExpireDate(expireDate) {
+    if (!expireDate) return ''
+    const date = new Date(expireDate)
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}年${month}月${day}日`
+  },
 })

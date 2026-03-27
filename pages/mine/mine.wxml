@@ -1,13 +1,37 @@
 <view class="container">
+  <!-- 顶部用户信息区域 -->
   <view class="user-info">
-    <image class="user-avatar" src="{{userInfo.avatar}}" mode="aspectFill"></image>
-    <text class="user-nickname">{{userInfo.nickname}}</text>
-  </view>
-  <view class="action-buttons">
-    <view wx:if="{{isMerchant && isValid}}" class="btn-shop" bindtap="onShopTap">
-      <text class="btn-text">我的店铺</text>
-      <text class="btn-days">剩余 {{remainingDays}} 天</text>
+    <!-- 未授权时显示授权引导 -->
+    <view wx:if="{{!isAuthorized}}" class="authorize-guide">
+      <text class="guide-text">授权后可查看个人信息、管理商铺等</text>
+      <view class="authorize-btn" bindtap="onAuthorizeTap">
+        <text>去授权</text>
+      </view>
     </view>
+    <!-- 已授权时显示用户信息 -->
+    <view wx:else class="user-info-container">
+      <!-- 更多操作按钮 -->
+      <view class="more-btn" bindtap="showActionSheet">
+        <text>...</text>
+      </view>
+      <view class="user-avatar-container">
+        <image class="user-avatar" src="{{userInfo.avatarUrl || '/images/default-avatar.png'}}" mode="aspectFill"></image>
+      </view>
+      <view class="user-nickname-container">
+        <text class="user-nickname">{{userInfo.nickName}}</text>
+        <text class="user-days" wx:if="{{isMerchant && isValid}}">店铺到期时间：{{expireDateFormatted}}</text>
+      </view>
+    </view>
+  </view>
+  
+  <!-- 下方按钮区域 -->
+  <view class="action-buttons">
+    <!-- 我的店铺按钮 -->
+    <view class="btn-shop" bindtap="onShopTap">
+      <text class="btn-text">我的店铺</text>
+    </view>
+    
+    <!-- 根据角色显示不同按钮 -->
     <view wx:if="{{isMerchant && isValid}}" class="btn-renew" bindtap="onRenewTap">
       <text>续费</text>
     </view>

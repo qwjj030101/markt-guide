@@ -1,0 +1,22 @@
+<view class="swiper-container">
+  <swiper 
+    indicator-dots 
+    autoplay 
+    interval="3000" 
+    duration="500"
+    circular
+  >
+    <swiper-item 
+      wx:for="{{banners}}" 
+      wx:key="index"
+      bindtap="handleBannerTap"
+      data-index="{{index}}"
+    >
+      <image 
+        src="{{item.image}}" 
+        class="swiper-image"
+        mode="aspectFill"
+      />
+    </swiper-item>
+  </swiper>
+</view>

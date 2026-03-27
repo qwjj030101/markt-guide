@@ -16,17 +16,8 @@ Page({
 
   // 页面加载时执行
   onLoad() {
-    // 调用 seedCategory 云函数，初始化分类数据
-  wx.cloud.callFunction({
-    name: 'seedCategory',
-    success: (res) => {
-      console.log('分类数据初始化成功:', res.result)
-    },
-    fail: (err) => {
-      console.error('分类数据初始化失败:', err)
-    }
-  })
-  
+    console.log('页面加载开始')
+    
     // 重置数据
     this.setData({
       page: 1,
@@ -34,10 +25,24 @@ Page({
       hasMore: true
     })
   
+    // 加载轮播图数据
     this.loadBanners()
+    
+    // 加载其他数据
     this.loadFilters()
     this.loadShops()
     this.loadCategories()
+    
+    // 调用 seedCategory 云函数，初始化分类数据
+    wx.cloud.callFunction({
+      name: 'seedCategory',
+      success: (res) => {
+        console.log('分类数据初始化成功:', res.result)
+      },
+      fail: (err) => {
+        console.error('分类数据初始化失败:', err)
+      }
+    })
   },
 
   // 搜索输入事件处理
@@ -62,39 +67,39 @@ Page({
   // 市场类型选择变化事件处理
   onMarketChange(e) {
     const index = e.detail.value
-  const selectedMarket = this.data.marketTypes[index]._id
-  const selectedMarketName = this.data.marketTypes[index].name
-  
-  console.log('选择的市场分类:', selectedMarket, selectedMarketName)
-  
-  this.setData({
-    selectedMarket,
-    selectedMarketName,
-    page: 1,
-    shopList: [],
-    hasMore: true
-  })
-  
-  this.loadShops()
+    const selectedMarket = this.data.marketTypes[index]._id
+    const selectedMarketName = this.data.marketTypes[index].name
+    
+    console.log('选择的市场分类:', selectedMarket, selectedMarketName)
+    
+    this.setData({
+      selectedMarket,
+      selectedMarketName,
+      page: 1,
+      shopList: [],
+      hasMore: true
+    })
+    
+    this.loadShops()
   },
 
   // 店铺类型选择变化事件处理
   onShopTypeChange(e) {
-   const index = e.detail.value
-  const selectedShopType = this.data.shopTypes[index]._id
-  const selectedShopTypeName = this.data.shopTypes[index].name
-  
-  console.log('选择的商铺类型:', selectedShopType, selectedShopTypeName)
-  
-  this.setData({
-    selectedShopType,
-    selectedShopTypeName,
-    page: 1,
-    shopList: [],
-    hasMore: true
-  })
-  
-  this.loadShops()
+    const index = e.detail.value
+    const selectedShopType = this.data.shopTypes[index]._id
+    const selectedShopTypeName = this.data.shopTypes[index].name
+    
+    console.log('选择的商铺类型:', selectedShopType, selectedShopTypeName)
+    
+    this.setData({
+      selectedShopType,
+      selectedShopTypeName,
+      page: 1,
+      shopList: [],
+      hasMore: true
+    })
+    
+    this.loadShops()
   },
 
   // 店铺点击事件处理
@@ -107,12 +112,25 @@ Page({
 
   // 加载轮播图数据
   loadBanners() {
-    wx.request({
-      url: 'https://api.example.com/banners',
-      success: (res) => {
-        this.setData({ banners: res.data })
+    // 使用本地轮播图数据
+    const banners = [
+      {
+        image: '/images/R.jpg',
+        url: '/pages/shop/detail?id=d3a1add769c28d16001336df5c5d21fc'
+      },
+      {
+        image: '/images/R 1.jpg',
+        url: '/pages/shop/detail?id=2'
+      },
+      {
+        image: '/images/R2.jpg',
+        url: '/pages/shop/detail?id=3'
       }
-    })
+    ]
+    
+    console.log('轮播图数据:', banners)
+    this.setData({ banners })
+    console.log('轮播图数据设置完成:', this.data.banners)
   },
 
   // 加载筛选条件数据
@@ -177,18 +195,18 @@ Page({
     console.log('返回的商铺数量:', res.result.data.length)
     console.log('返回的商铺列表:', res.result.data)
     
-   if (res.result.success) {
-  // 直接使用云函数返回的临时URL，不再需要前端转换
-  // 原因：云函数已经在返回前将云存储file ID转换为临时URL
-  const newShopList = this.data.shopList.concat(res.result.data)
-  console.log('新的商铺列表:', newShopList)
-  console.log('第一个店铺的头像:', newShopList[0]?.avatar)
-  
-  this.setData({
-    shopList: newShopList,
-    hasMore: res.result.data.length >= 10
-  })
-} else {
+    if (res.result.success) {
+      // 直接使用云函数返回的临时URL，不再需要前端转换
+      // 原因：云函数已经在返回前将云存储file ID转换为临时URL
+      const newShopList = this.data.shopList.concat(res.result.data)
+      console.log('新的商铺列表:', newShopList)
+      console.log('第一个店铺的头像:', newShopList[0]?.avatar)
+      
+      this.setData({
+        shopList: newShopList,
+        hasMore: res.result.data.length >= 10
+      })
+    } else {
   wx.showToast({
     title: '加载失败',
     icon: 'none'
@@ -262,15 +280,14 @@ Page({
         console.log('商铺类型数据:', shopRes.result.data)
         
         // 添加“全部”选项
-      const marketTypesWithAll = [{ _id: '', name: '全部' }, ...marketRes.result.data]
-      const shopTypesWithAll = [{ _id: '', name: '全部' }, ...shopRes.result.data]
-      
-      // 更新数据
-      this.setData({
-        marketTypes: marketTypesWithAll,
-        shopTypes: shopTypesWithAll
-      })
-      
+        const marketTypesWithAll = [{ _id: '', name: '全部' }, ...marketRes.result.data]
+        const shopTypesWithAll = [{ _id: '', name: '全部' }, ...shopRes.result.data]
+        
+        // 更新数据
+        this.setData({
+          marketTypes: marketTypesWithAll,
+          shopTypes: shopTypesWithAll
+        })
         
         console.log('更新后的 marketTypes:', this.data.marketTypes)
         console.log('更新后的 shopTypes:', this.data.shopTypes)
