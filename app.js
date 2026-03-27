@@ -81,6 +81,18 @@ App({
             this.globalData.shop_id = userData.shop_id || null
             this.globalData.expire_date = userData.expire_date || null
             
+            // 存储用户头像和昵称
+            this.globalData.userInfo = {
+              nickName: userData.nickname || '微信用户',
+              avatarUrl: userData.avatar || ''
+            }
+            // 同时更新本地缓存
+            try {
+              wx.setStorageSync('userInfoWechat', this.globalData.userInfo)
+            } catch (err) {
+              console.error('缓存用户信息失败:', err)
+            }
+            
             // 步骤4：将用户信息存入本地缓存
             const cacheData = {
               openid: userData.openid,  // 修复：改为 openid
@@ -90,6 +102,7 @@ App({
             }
             wx.setStorageSync('userInfo', cacheData)
             console.log('用户信息已存入本地缓存:', cacheData)
+            console.log('用户头像和昵称:', this.globalData.userInfo)
             
             // 移除自动调用getUserProfile，改为用户主动触发
             console.log('登录成功，globalData:', this.globalData)

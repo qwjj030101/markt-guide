@@ -1,0 +1,25 @@
+<view class="demand-card">
+  <!-- 发布者信息 -->
+  <view class="demand-header">
+    <image class="user-avatar" src="{{demand.user.avatar}}" mode="aspectFill"></image>
+    <text class="user-nickname">{{demand.user.nickName}}</text>
+  </view>
+  
+  <!-- 需求内容 -->
+  <view class="demand-content">{{demand.content}}</view>
+  
+  <!-- 响应列表 -->
+  <view class="response-list">
+    <view class="response-item" wx:for="{{displayResponses}}" wx:for-item="response" wx:key="shopId" bindtap="onTapShop" data-shop-id="{{response.shopId}}">
+      <image class="response-avatar" src="{{response.shopAvatar}}" mode="aspectFill"></image>
+      <text class="response-remark">{{response.remark}}</text>
+    </view>
+    <text class="more-response" wx:if="{{demand.responses.length > 3 && displayResponses.length > 0}}" bindtap="toggleShowMore">{{showMore ? '收起' : '...等' + demand.responses.length + '人响应'}}</text>
+  </view>
+  
+  <!-- 操作按钮 -->
+  <view class="demand-actions">
+    <button wx:if="{{demand.isOwn}}" class="btn-complete" bindtap="onTapComplete" data-demand-id="{{demand.id}}">已完成</button>
+    <button wx:elif="{{demand.canRespond}}" class="btn-respond" bindtap="onTapResponse" data-demand-id="{{demand.id}}">我有货</button>
+  </view>
+</view>

@@ -86,7 +86,9 @@ async function login(code) {
       openid: userData.openid,
       role: userData.role,
       shop_id: userData.shop_id,
-      expire_date: userData.expire_date
+      expire_date: userData.expire_date,
+      nickname: userData.nickname,
+      avatar: userData.avatar
     }
   }
 }

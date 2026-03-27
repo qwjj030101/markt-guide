@@ -17,7 +17,6 @@ Page({
   onLoad() {
     this.loadBanners()
     this.loadUserInfo()
-    this.loadDemandList()
   },
 
   /**
@@ -100,24 +99,77 @@ Page({
    * 用户可以发布新的需求描述
    */
   onPublish() {
+    this.showPublishModal()
+  },
+
+  /**
+   * 显示发布需求对话框
+   */
+  showPublishModal() {
     wx.showModal({
       title: '发布需求',
       editable: true,
-      placeholderText: '请输入需求描述',
+      placeholderText: '请输入您要采购的商品或服务',
+      confirmText: '发布',
       success: (res) => {
         if (res.confirm && res.content) {
-          wx.request({
-            url: 'https://api.example.com/demands',
-            method: 'POST',
-            data: { content: res.content },
-            success: () => {
-              wx.showToast({ title: '发布成功', icon: 'success' })
-              this.loadDemandList()
-            }
-          })
+          this.addDemand(res.content)
         }
       }
     })
+  },
+
+  /**
+   * 添加需求
+   * @param {string} content - 需求内容
+   */
+  async addDemand(content) {
+    try {
+      // 显示加载提示
+      wx.showLoading({ title: '发布中...' })
+
+      // 获取当前用户的 openid
+      const app = getApp()
+      let openid = app.globalData.openid
+      
+      if (!openid) {
+        // 如果 globalData 中没有 openid，从本地缓存获取
+        openid = wx.getStorageSync('openid')
+        if (!openid) {
+          // 如果本地缓存也没有，提示用户
+          wx.hideLoading()
+          wx.showToast({ title: '请先登录', icon: 'none' })
+          return
+        }
+      }
+
+      // 调用云函数
+      const result = await wx.cloud.callFunction({
+        name: 'demand',
+        data: {
+          action: 'add',
+          content: content,
+          user_id: openid
+        }
+      })
+
+      // 隐藏加载提示
+      wx.hideLoading()
+
+      // 处理结果
+      if (result.result.success) {
+        wx.showToast({ title: '发布成功' })
+        this.loadDemandList()
+      } else {
+        wx.showToast({ title: '发布失败', icon: 'none' })
+      }
+    } catch (err) {
+      // 隐藏加载提示
+      wx.hideLoading()
+      // 显示错误信息
+      console.error('发布需求失败:', err)
+      wx.showToast({ title: '发布失败', icon: 'none' })
+    }
   },
 
   /**
@@ -138,27 +190,101 @@ Page({
    * 获取用户角色信息，判断是否为商户，并设置相应页面标题
    */
   loadUserInfo() {
-    wx.request({
-      url: 'https://api.example.com/user/info',
-      success: (res) => {
-        this.setData({
-          isMerchant: res.data.role === 1,
-          pageTitle: res.data.role === 1 ? '需求广场' : '我的需求'
-        })
+    const app = getApp()
+    // 从 globalData 获取用户信息
+    const userInfo = app.globalData.userInfo
+    const role = app.globalData.role
+    
+    this.setData({
+      isMerchant: role === 1,
+      pageTitle: role === 1 ? '需求广场' : '我的需求'
+    })
+    
+    // 根据用户角色决定是否传 user_id
+    this.loadDemandList()
+  },
+
+  /**
+   * 加载需求列表
+   * 从服务器获取需求数据
+   */
+  loadDemandList() {
+    const app = getApp()
+    const role = app.globalData.role
+    const openid = app.globalData.openid
+    
+    console.log('加载需求列表 - 用户角色:', role, 'openid:', openid)
+    
+    // 根据用户角色决定是否传 user_id
+    const data = { action: 'list' }
+    if (role !== 1 && openid) { // 普通用户传 user_id，且 openid 存在
+      data.user_id = openid
+      console.log('加载需求列表 - 普通用户，传 user_id:', openid)
+    } else {
+      console.log('加载需求列表 - 商户或 openid 不存在，不传 user_id')
+    }
+    
+    wx.cloud.callFunction({
+      name: 'demand',
+      data: data,
+      success: (result) => {
+        console.log('加载需求列表 - 云函数返回结果:', result)
+        if (result.result.success) {
+          console.log('加载需求列表 - 成功，数据:', result.result.data)
+          
+          // 处理数据，添加必要的字段
+          const processedData = result.result.data.map(item => {
+            return {
+              id: item._id,
+              user: item.user || { // 使用云函数返回的用户信息
+                avatar: '/images/R.jpg',
+                nickName: '用户' + item.user_id.substring(0, 4)
+              },
+              content: item.content,
+              responses: item.responses || [], // 如果没有响应，设置为空数组
+              isOwn: item.user_id === openid, // 判断是否是当前用户发布的
+              canRespond: role === 1 && item.user_id !== openid, // 商户可以响应不是自己发布的需求
+              status: item.status
+            }
+          })
+          
+          this.setData({ demandList: processedData })
+        } else {
+          console.log('加载需求列表 - 失败，原因:', result.result.message)
+          wx.showToast({ title: '加载失败', icon: 'none' })
+        }
+      },
+      fail: (err) => {
+        console.error('加载需求列表失败:', err)
+        wx.showToast({ title: '加载失败', icon: 'none' })
       }
     })
   },
 
   /**
-   * 加载需求列表
-   * 从服务器获取所有需求数据
+   * 点击响应列表中的头像
+   * @param {Object} e - 事件对象
    */
-  loadDemandList() {
-    wx.request({
-      url: 'https://api.example.com/demands',
-      success: (res) => {
-        this.setData({ demandList: res.data })
-      }
-    })
+  onTapShop(e) {
+    const shopId = e.detail.shop_id
+    this.onResponseTap({ currentTarget: { dataset: { shopId: shopId } } })
+  },
+
+  /**
+   * 点击"我有货"按钮
+   * @param {Object} e - 事件对象
+   */
+  onTapResponse(e) {
+    const demandId = e.detail.demand_id
+    this.onRespond({ currentTarget: { dataset: { id: demandId } } })
+  },
+
+  /**
+   * 点击"已完成"按钮
+   * @param {Object} e - 事件对象
+   */
+  onTapComplete(e) {
+    const demandId = e.detail.demand_id
+    this.onComplete({ currentTarget: { dataset: { id: demandId } } })
   }
 })

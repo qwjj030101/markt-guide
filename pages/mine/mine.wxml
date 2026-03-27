@@ -15,7 +15,7 @@
         <text>...</text>
       </view>
       <view class="user-avatar-container">
-        <image class="user-avatar" src="{{userInfo.avatarUrl || '/images/default-avatar.png'}}" mode="aspectFill"></image>
+        <image class="user-avatar" src="{{userInfo.avatarUrl || 'https://via.placeholder.com/100'}}" mode="aspectFill"></image>
       </view>
       <view class="user-nickname-container">
         <text class="user-nickname">{{userInfo.nickName}}</text>

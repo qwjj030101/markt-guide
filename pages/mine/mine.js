@@ -182,21 +182,45 @@ chooseAvatar() {
     success: (res) => {
       const tempFilePaths = res.tempFiles
       if (tempFilePaths.length > 0) {
+        const tempFilePath = tempFilePaths[0].tempFilePath
         const app = getApp()
-        // 存储头像路径到用户信息
-        app.globalData.userInfo.avatarUrl = tempFilePaths[0].tempFilePath
-        // 存储到本地缓存
-        try {
-          wx.setStorageSync('userInfoWechat', app.globalData.userInfo)
-        } catch (err) {
-          console.error('缓存用户信息失败:', err)
-        }
-        // 更新页面数据
-        this.setData({
-          userInfo: app.globalData.userInfo
+        
+        // 显示加载提示
+        wx.showLoading({ title: '上传中...' })
+        
+        // 上传图片到云存储
+        wx.cloud.uploadFile({
+          cloudPath: 'avatars/' + Date.now() + '.jpg', // 生成唯一的文件名
+          filePath: tempFilePath,
+          success: (uploadRes) => {
+            // 获取云存储的永久链接
+            const avatarUrl = uploadRes.fileID
+            
+            // 存储头像路径到用户信息
+            app.globalData.userInfo.avatarUrl = avatarUrl
+            // 存储到本地缓存
+            try {
+              wx.setStorageSync('userInfoWechat', app.globalData.userInfo)
+            } catch (err) {
+              console.error('缓存用户信息失败:', err)
+            }
+            // 更新页面数据
+            this.setData({
+              userInfo: app.globalData.userInfo
+            })
+            // 同步到数据库
+            this.updateUserInfoToDB()
+            
+            // 隐藏加载提示
+            wx.hideLoading()
+          },
+          fail: (err) => {
+            console.error('上传头像失败:', err)
+            // 隐藏加载提示
+            wx.hideLoading()
+            wx.showToast({ title: '上传失败', icon: 'none' })
+          }
         })
-        // 同步到数据库
-        this.updateUserInfoToDB()
       }
     }
   })
