@@ -57,12 +57,23 @@ Page({
    */
   onComplete(e) {
     const id = e.currentTarget.dataset.id
-    wx.request({
-      url: `https://api.example.com/demands/${id}/complete`,
-      method: 'POST',
-      success: () => {
-        wx.showToast({ title: '已完成', icon: 'success' })
-        this.loadDemandList()
+    wx.cloud.callFunction({
+      name: 'demand',
+      data: {
+        action: 'complete',
+        demand_id: id
+      },
+      success: (result) => {
+        if (result.result.success) {
+          wx.showToast({ title: '已完成', icon: 'success' })
+          this.loadDemandList()
+        } else {
+          wx.showToast({ title: '操作失败', icon: 'none' })
+        }
+      },
+      fail: (err) => {
+        console.error('标记需求完成失败:', err)
+        wx.showToast({ title: '操作失败', icon: 'none' })
       }
     })
   },
@@ -80,13 +91,29 @@ Page({
       placeholderText: '请输入商户备注',
       success: (res) => {
         if (res.confirm && res.content) {
-          wx.request({
-            url: `https://api.example.com/demands/${id}/respond`,
-            method: 'POST',
-            data: { remark: res.content },
-            success: () => {
-              wx.showToast({ title: '响应成功', icon: 'success' })
-              this.loadDemandList()
+          // 获取当前商户的 shop_id（这里需要根据实际情况获取）
+          const app = getApp()
+          const shopId = app.globalData.shop_id || 'default_shop_id'
+          
+          wx.cloud.callFunction({
+            name: 'demand',
+            data: {
+              action: 'respond',
+              demand_id: id,
+              remark: res.content,
+              shop_id: shopId
+            },
+            success: (result) => {
+              if (result.result.success) {
+                wx.showToast({ title: '响应成功', icon: 'success' })
+                this.loadDemandList()
+              } else {
+                wx.showToast({ title: '操作失败', icon: 'none' })
+              }
+            },
+            fail: (err) => {
+              console.error('响应需求失败:', err)
+              wx.showToast({ title: '操作失败', icon: 'none' })
             }
           })
         }

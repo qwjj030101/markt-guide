@@ -75,11 +75,16 @@
 }
 
 .btn-complete {
-  background-color: #f0f0f0;
-  color: #666;
+  background-color: #3cc51f;
+  color: #fff;
 }
 
 .btn-respond {
   background-color: #3cc51f;
   color: #fff;
+}
+
+.btn-disabled {
+  background-color: #ccc;
+  color: #999;
 }

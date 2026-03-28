@@ -22,6 +22,73 @@ exports.main = async (event, context) => {
         success: true,
         id: result._id
       };
+    } else if (action === 'respond') {
+     // 响应需求
+  const { demand_id, remark, shop_id } = event;
+  console.log('respond action - 参数:', { demand_id, remark, shop_id });
+  
+  // 参数校验
+  if (!demand_id) {
+    console.error('respond action - 缺少 demand_id 参数');
+    return { success: false, message: '缺少需求ID' };
+  }
+  if (!remark) {
+    console.error('respond action - 缺少 remark 参数');
+    return { success: false, message: '缺少备注信息' };
+  }
+  if (!shop_id) {
+    console.error('respond action - 缺少 shop_id 参数');
+    return { success: false, message: '缺少商户ID' };
+  }
+  
+  try {
+    // 检查是否已经响应过
+    const existingResponse = await db.collection('response')
+      .where({
+        demand_id: demand_id,
+        shop_id: shop_id
+      })
+      .get();
+    
+    if (existingResponse.data.length > 0) {
+      console.error('respond action - 已经响应过该需求');
+      return { success: false, message: '您已经响应过该需求' };
+    }
+    
+    // 插入响应数据
+    const result = await db.collection('response').add({
+      data: {
+        demand_id: demand_id,
+        shop_id: shop_id,
+        remark: remark,
+        created_at: new Date()
+      }
+    });
+    
+    console.log('respond action - 插入成功:', result);
+    return {
+      success: true,
+      id: result._id
+    };
+  } catch (err) {
+    console.error('respond action - 插入失败:', err);
+    return { success: false, message: '插入数据失败: ' + err.message };
+  }
+    } else if (action === 'complete') {
+      // 标记需求为已完成
+      const { demand_id } = event;
+      
+      // 更新需求状态
+      const result = await db.collection('demand').doc(demand_id).update({
+        data: {
+          status: 1 // 1 表示已完成
+        }
+      });
+      
+      return {
+        success: true,
+        updated: result.updated
+      };
     } else if (action === 'list') {
       // 查询需求列表
       let query = db.collection('demand');
@@ -144,7 +211,19 @@ try {
         }
       }
       
-      console.log('查询需求列表结果:', demandsWithUserInfo);
+      // 对需求列表进行排序：先按 status 升序（0在1前），再按 created_at 降序（新的在前）
+      demandsWithUserInfo.sort((a, b) => {
+        // 先按 status 升序
+        if (a.status !== b.status) {
+          return a.status - b.status;
+        }
+        // 再按 created_at 降序
+        const dateA = new Date(a.created_at);
+        const dateB = new Date(b.created_at);
+        return dateB - dateA;
+      });
+      
+      console.log('查询需求列表结果（排序后）:', demandsWithUserInfo);
       return {
         success: true,
         data: demandsWithUserInfo

@@ -41,6 +41,23 @@ Component({
      */
     onTapResponse(e) {
       const demandId = e.currentTarget.dataset.demandId;
+      const { demand } = this.properties;
+      
+      console.log('点击我有货按钮 - demandId:', demandId, 'demand.status:', demand.status);
+      
+      // 检查需求是否已完成
+      if (demand.status === 1) {
+        console.log('需求已完成，显示提示');
+        wx.showToast({
+          title: '需求已完成',
+          icon: 'none',
+          duration: 2000
+        });
+        return;
+      }
+      
+      console.log('需求未完成，触发响应事件');
+      // 触发响应事件
       this.triggerEvent('tapResponse', { demand_id: demandId });
     },
 
