@@ -38,5 +38,10 @@
   },
   "style": "v2",
   "sitemapLocation": "sitemap.json",
-  "requiredPrivateInfos": ["chooseLocation"]
+  "requiredPrivateInfos": ["chooseLocation", "getLocation"],
+  "permission": {
+    "scope.userLocation": {
+      "desc": "用于获取您的当前位置以填写商铺地址"
+    }
+  }
 }

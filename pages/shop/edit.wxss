@@ -85,12 +85,26 @@
   padding-right: 60rpx;
 }
 
-.address-icon {
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 30rpx;
+.address-buttons {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 20rpx;
+}
+
+.address-btn {
+  flex: 1;
+  height: 60rpx;
+  font-size: 26rpx;
+  line-height: 60rpx;
+  padding: 0;
+  background-color: #f5f5f5;
+  color: #333;
+  border-radius: 8rpx;
+  border: 1rpx solid #e0e0e0;
+}
+
+.address-btn:hover {
+  background-color: #e8e8e8;
 }
 
 /* 文本域 */

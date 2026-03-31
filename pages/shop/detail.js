@@ -82,6 +82,16 @@ Page({
   },
 
   /**
+   * 图片加载失败处理
+   */
+  onImageError() {
+    // 图片加载失败时使用默认图片
+    this.setData({
+      'shopInfo.avatar': '/images/R.jpg'
+    })
+  },
+
+  /**
    * 加载商铺信息
    * @param {string} shopId - 商铺ID
    */

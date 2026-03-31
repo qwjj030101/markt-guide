@@ -1,28 +1,51 @@
 <view class="container">
-  <view class="form-section">
-    <view class="form-item">
-      <text class="label">商品图片</text>
-      <view class="image-upload" bindtap="onImageTap">
-        <image wx:if="{{formData.image}}" src="{{formData.image}}" mode="aspectFill"></image>
-        <text wx:else>点击上传</text>
-      </view>
-    </view>
+  <view class="form-card">
     <view class="form-item">
       <text class="label">商品名称</text>
-      <input class="input" value="{{formData.name}}" bindinput="onNameInput" placeholder="请输入商品名称" />
+      <input 
+        class="input" 
+        placeholder="请输入商品名称" 
+        value="{{productInfo.name}}" 
+        bindinput="onNameChange"
+      />
     </view>
-  </view>
-  <view class="product-list" wx:if="{{productList.length > 0}}">
-    <view class="section-title">已有商品</view>
-    <view class="product-item" wx:for="{{productList}}" wx:key="id">
-      <image class="product-image" src="{{item.image}}" mode="aspectFill"></image>
-      <text class="product-name">{{item.name}}</text>
-      <view class="delete-btn" bindtap="onDelete" data-id="{{item.id}}">
-        <text>删除</text>
+    
+    <view class="form-item">
+      <text class="label">商品图片</text>
+      <view class="image-upload">
+        <image 
+          wx:if="{{productInfo.image}}" 
+          class="preview-image" 
+          src="{{productInfo.image}}" 
+          mode="aspectFill"
+        />
+        <view 
+          wx:else 
+          class="upload-placeholder"
+          bindtap="chooseImage"
+        >
+          <text class="upload-text">点击上传图片</text>
+        </view>
+        <view class="upload-btn" bindtap="chooseImage">
+          <text>+</text>
+        </view>
       </view>
     </view>
-  </view>
-  <view class="submit-btn" bindtap="onSubmit">
-    <text>添加商品</text>
+    
+    <view class="button-group">
+      <button 
+        class="save-btn" 
+        bindtap="onSave"
+      >
+        保存
+      </button>
+      <button 
+        wx:if="{{isEditMode}}" 
+        class="delete-btn" 
+        bindtap="onDelete"
+      >
+        删除
+      </button>
+    </view>
   </view>
 </view>

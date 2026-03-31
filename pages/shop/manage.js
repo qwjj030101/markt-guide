@@ -13,7 +13,8 @@ Page({
       businessHours: '',  // 营业时间
       description: ''     // 商铺描述
     },
-    productList: []       // 商品列表
+    productList: [],      // 商品列表
+    isLoading: false      // 加载状态标志
   },
 
   /**
@@ -46,8 +47,11 @@ Page({
    * 每次显示页面时刷新商铺信息和商品列表，确保数据最新
    */
   onShow() {
-    this.loadShopInfo()
-    this.loadProductList()
+    // 只在非加载状态时刷新，避免重复加载
+    if (!this.data.isLoading) {
+      this.loadShopInfo()
+      this.loadProductList()
+    }
   },
 
   /**
@@ -65,8 +69,21 @@ Page({
    * 跳转到商品编辑页面
    */
   onAddProductTap() {
+    const { shopId } = this.data
     wx.navigateTo({
-      url: '/pages/product/edit'
+      url: `/pages/product/edit?shop_id=${shopId}`
+    })
+  },
+
+  /**
+   * 编辑商品点击事件
+   * 跳转到商品编辑页面，传递商品ID
+   */
+  onEditProduct(e) {
+    const { shopId } = this.data
+    const productId = e.currentTarget.dataset.productId
+    wx.navigateTo({
+      url: `/pages/product/edit?shop_id=${shopId}&product_id=${productId}`
     })
   },
 
@@ -139,7 +156,14 @@ Page({
    * 从服务器获取当前商铺的商品列表
    */
   loadProductList() {
-    const { shopId } = this.data
+    const { shopId, isLoading } = this.data
+    
+    // 如果正在加载，直接返回，避免重复加载
+    if (isLoading) {
+      return
+    }
+    
+    this.setData({ isLoading: true })
     
     try {
       wx.cloud.callFunction({
@@ -156,11 +180,64 @@ Page({
         },
         fail: (err) => {
           console.error('获取商品列表失败:', err)
+        },
+        complete: () => {
+          this.setData({ isLoading: false })
         }
       })
     } catch (err) {
       console.error('获取商品列表失败:', err)
       wx.showToast({ title: '加载失败', icon: 'none' })
+      this.setData({ isLoading: false })
     }
+  },
+
+  /**
+   * 删除商品点击事件
+   * 弹出确认框，确认后调用云函数删除商品
+   */
+  onDeleteProduct(e) {
+    const productId = e.currentTarget.dataset.productId
+    
+    wx.showModal({
+      title: '确认删除',
+      content: '确定删除该商品吗？',
+      success: (modalRes) => {
+        if (modalRes.confirm) {
+          wx.showLoading({ title: '删除中...' })
+          
+          try {
+            wx.cloud.callFunction({
+              name: 'product',
+              data: {
+                action: 'delete',
+                productId: productId
+              },
+              success: (res) => {
+                console.log('删除商品成功:', res)
+                if (res.result.code === 0) {
+                  wx.showToast({ title: '删除成功', icon: 'success' })
+                  // 删除成功后刷新商品列表
+                  this.loadProductList()
+                } else {
+                  wx.showToast({ title: '删除失败', icon: 'none' })
+                }
+              },
+              fail: (err) => {
+                console.error('删除商品失败:', err)
+                wx.showToast({ title: '删除失败', icon: 'none' })
+              },
+              complete: () => {
+                wx.hideLoading()
+              }
+            })
+          } catch (err) {
+            console.error('删除商品失败:', err)
+            wx.hideLoading()
+            wx.showToast({ title: '删除失败', icon: 'none' })
+          }
+        }
+      }
+    })
   }
 })

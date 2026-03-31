@@ -49,16 +49,15 @@
     <!-- 商铺地址 -->
     <view class="form-item">
       <text class="label">商铺地址</text>
-      <view class="address-input">
-        <input 
-          class="input address" 
-          placeholder="请选择地址" 
-          value="{{shopInfo.address}}" 
-          bindinput="onAddressChange"
-        />
-        <view class="address-icon" bindtap="chooseAddress">
-          <text>📍</text>
-        </view>
+      <input 
+        class="input address" 
+        placeholder="请选择地址" 
+        value="{{shopInfo.address}}" 
+        bindinput="onAddressChange"
+      />
+      <view class="address-buttons">
+        <button class="address-btn" bindtap="chooseLocation">地图选点</button>
+        <button class="address-btn" bindtap="getCurrentLocation">获取当前位置</button>
       </view>
     </view>
 

@@ -317,8 +317,8 @@ async function updateShop(params) {
     
     // 只有当 lat 和 lng 存在时才更新
     if (lat !== undefined && lng !== undefined) {
-      updateData.lat = Number(lat)
-      updateData.lng = Number(lng)
+      updateData.lat = parseFloat(lat)
+      updateData.lng = parseFloat(lng)
     }
     
     await db.collection('shop').doc(shopId).update({
@@ -366,8 +366,8 @@ async function createShop(params) {
     const result = await db.collection('shop').add({
       data: {
         ...otherData,
-        lat: lat !== undefined ? Number(lat) : null,
-        lng: lng !== undefined ? Number(lng) : null,
+        lat: lat !== undefined ? parseFloat(lat) : null,
+        lng: lng !== undefined ? parseFloat(lng) : null,
         status: 1, // 免费入驻直接上架
         create_time: db.serverDate(),
         update_time: db.serverDate()

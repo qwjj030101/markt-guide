@@ -2,7 +2,7 @@
   <!-- 顶部商铺名片 -->
   <view class="shop-card">
     <!-- 背景图 -->
-    <view class="bg-image" style="{{'background-image: url(' + (shopInfo.avatar || '') + ');'}}"></view>
+    <view class="bg-image" style="background-image: url({{shopInfo.avatar || '/images/R.jpg'}});"></view>
     <view class="bg-blur"></view>
     <!-- 商铺信息 -->
     <view class="shop-info">
@@ -35,7 +35,7 @@
       <block wx:for="{{productList}}" wx:key="_id">
         <view class="product-item">
           <view class="product-image">
-            <image src="{{item.image || '/images/product1.jpg'}}" mode="aspectFill"></image>
+            <image src="{{item.image || '/images/product1.jpg'}}" mode="aspectFill" binderror="onImageError"></image>
           </view>
           <text class="product-name">{{item.name}}</text>
         </view>

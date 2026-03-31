@@ -105,18 +105,22 @@ Page({
       filePath: tempFilePath,
       success: (res) => {
         console.log('上传头像成功:', res)
-        const avatarUrl = res.fileID
+        const avatarFileId = res.fileID
         
-        // 获取临时文件URL用于预览
+        // 存储fileID，而不是临时URL
+        const updatedShopInfo = {
+          ...this.data.shopInfo,
+          avatar: avatarFileId
+        }
+        this.setData({ shopInfo: updatedShopInfo })
+        
+        // 可以选择获取临时URL用于预览，但存储的应该是fileID
         wx.cloud.getTempFileURL({
-          fileList: [avatarUrl],
+          fileList: [avatarFileId],
           success: (tempRes) => {
             if (tempRes.fileList[0].tempFileURL) {
-              const updatedShopInfo = {
-                ...this.data.shopInfo,
-                avatar: tempRes.fileList[0].tempFileURL
-              }
-              this.setData({ shopInfo: updatedShopInfo })
+              // 只是用于预览，不存储
+              console.log('预览URL:', tempRes.fileList[0].tempFileURL)
             }
           }
         })
@@ -135,7 +139,11 @@ Page({
    * 选择地址
    * 调用系统地图选择位置
    */
-  chooseAddress() {
+  /**
+   * 地图选点
+   */
+  chooseLocation() {
+    wx.showLoading({ title: '加载地图...' })
     wx.chooseLocation({
       success: (res) => {
         const address = res.address
@@ -150,13 +158,77 @@ Page({
         }
         
         this.setData({ shopInfo: updatedShopInfo })
+        wx.hideLoading()
+        wx.showToast({ title: '选点成功', icon: 'success' })
       },
       fail: (err) => {
         console.error('选择地址失败:', err)
+        wx.hideLoading()
         wx.showToast({
-          title: '选择地址失败，请重试',
+          title: '选点失败，请重试',
           icon: 'none'
         })
+      }
+    })
+  },
+
+  /**
+   * 获取当前位置
+   */
+  getCurrentLocation() {
+    wx.showLoading({ title: '定位中...' })
+    wx.getLocation({
+      type: 'gcj02',
+      isHighAccuracy: true,
+      highAccuracyExpireTime: 3500,
+      success: (res) => {
+        wx.hideLoading()
+        const lat = res.latitude
+        const lng = res.longitude
+        
+        wx.showModal({
+          title: '填写地址名称',
+          placeholderText: '请输入地址名称（如：我家仓库）',
+          editable: true,
+          success: (modalRes) => {
+            if (modalRes.confirm) {
+              const address = modalRes.content || ''
+              const updatedShopInfo = {
+                ...this.data.shopInfo,
+                address: address,
+                lat: lat,
+                lng: lng
+              }
+              this.setData({ shopInfo: updatedShopInfo })
+              wx.showToast({ title: '获取位置成功', icon: 'success' })
+            }
+          }
+        })
+      },
+      fail: (err) => {
+        console.error('获取位置失败:', err)
+        wx.hideLoading()
+        
+        if (err.errMsg.includes('auth deny')) {
+          // 用户拒绝授权
+          wx.showModal({
+            title: '授权失败',
+            content: '需要精确位置权限才能获取当前位置，请前往设置开启',
+            confirmText: '去设置',
+            cancelText: '取消',
+            success: (modalRes) => {
+              if (modalRes.confirm) {
+                wx.openSetting({})
+              }
+            }
+          })
+        } else {
+          // 其他错误（如定位超时、GPS未开启）
+          wx.showToast({
+            title: '获取位置失败，请检查GPS或网络',
+            icon: 'none'
+          })
+        }
       }
     })
   },
