@@ -21,7 +21,7 @@
           <text class="detail-value">{{shopInfo.business_hours || shopInfo.businessHours || '09:00-18:00'}}</text>
         </view>
         <view class="detail-item">
-          <text class="detail-label">简介：</text>
+          <text class="detail-label">商铺简介：</text>
           <text class="detail-value">{{shopInfo.description}}</text>
         </view>
       </view>

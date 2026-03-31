@@ -84,6 +84,11 @@
   color: #fff;
 }
 
+.btn-withdraw {
+  background-color: #ff9800;
+  color: #fff;
+}
+
 .btn-disabled {
   background-color: #ccc;
   color: #999;

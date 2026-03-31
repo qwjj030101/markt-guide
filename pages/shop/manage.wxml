@@ -4,7 +4,9 @@
     <view class="shop-info">
       <view class="shop-header">
         <text class="shop-name">{{shopInfo.name}}</text>
-        <image class="edit-icon" src="/images/icon_edit.png" mode="aspectFit" bindtap="onEditTap"></image>
+        <view class="edit-btn" bindtap="onEditTap">
+          <text>编辑</text>
+        </view>
       </view>
       <view class="shop-detail">
         <text class="detail-item" bindtap="onPhoneTap">
@@ -19,8 +21,13 @@
           <text class="label">营业时间：</text>
           <text class="value">{{shopInfo.businessHours}}</text>
         </text>
+        
+          
       </view>
-      <text class="shop-desc">{{shopInfo.description}}</text>
+      <view class="shop-desc">
+        <text class="desc-label">商铺简介：</text>
+        <text class="desc-content">{{shopInfo.description}}</text>
+      </view>
     </view>
   </view>
   <view class="product-list">

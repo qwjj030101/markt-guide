@@ -122,6 +122,43 @@ Page({
   },
 
   /**
+   * 撤回响应事件
+   * 商户可以撤回之前对需求的响应
+   * @param {Object} e - 事件对象
+   */
+  onDemandWithdraw(e) {
+    const demandId = e.detail.demand_id
+    
+    wx.showModal({
+      title: '确认撤回',
+      content: '确认撤回该响应吗？',
+      success: (res) => {
+        if (res.confirm) {
+          wx.cloud.callFunction({
+            name: 'demand',
+            data: {
+              action: 'withdraw',
+              demand_id: demandId
+            },
+            success: (result) => {
+              if (result.result.success) {
+                wx.showToast({ title: '撤回成功', icon: 'success' })
+                this.loadDemandList()
+              } else {
+                wx.showToast({ title: result.result.message || '操作失败', icon: 'none' })
+              }
+            },
+            fail: (err) => {
+              console.error('撤回响应失败:', err)
+              wx.showToast({ title: '操作失败', icon: 'none' })
+            }
+          })
+        }
+      }
+    })
+  },
+
+  /**
    * 发布需求事件
    * 用户可以发布新的需求描述
    */
@@ -261,6 +298,14 @@ Page({
           
           // 处理数据，添加必要的字段
           const processedData = result.result.data.map(item => {
+            // 获取当前用户的 shop_id
+            const shopId = app.globalData.shop_id;
+            console.log('处理需求 - 需求ID:', item._id, '当前shopId:', shopId, '响应列表:', item.responses);
+            
+            // 判断当前商户是否已经响应过该需求
+            const hasResponded = item.responses && item.responses.some(response => response.shopId === shopId);
+            console.log('处理需求 - hasResponded:', hasResponded, 'status:', item.status);
+            
             return {
               id: item._id,
               user: item.user || { // 使用云函数返回的用户信息
@@ -271,6 +316,7 @@ Page({
               responses: item.responses || [], // 如果没有响应，设置为空数组
               isOwn: item.user_id === openid, // 判断是否是当前用户发布的
               canRespond: role === 1 && item.user_id !== openid, // 商户可以响应不是自己发布的需求
+              hasResponded: hasResponded, // 当前商户是否已响应
               status: item.status
             }
           })

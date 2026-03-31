@@ -74,6 +74,8 @@ exports.main = async (event, context) => {
         return await addProduct(event)
       case 'deleteProduct':
         return await deleteProduct(event.productId)
+      case 'create':
+        return await createShop(event)
       default:
         return {
           code: -1,
@@ -157,15 +159,49 @@ async function getShopList(params) {
   
   console.log('最终查询条件:', where)
   
+  // 构建 查询条件， 同时支持category_type 和 cateogry_type
+
+  let queryCondition = {
+    status: 1,
+    expire_date: _.gt(new Date())
+  }
+  
+  // 添加关键词搜索
+  if (keyword) {
+    queryCondition.name = db.RegExp({
+      regexp: keyword,
+      options: 'i'  // 不区分大小写
+    })
+  }
+  
+
+  // 添加市场类型过滤
+  if (market_type) {
+    queryCondition.market_type = where.market_type
+  }
+  
+  // 添加商铺类型过滤，同时支持两种字段名
+  if (shop_category) {
+    queryCondition.$or = [
+      { category_type: where.category_type },
+      { cateogry_type: where.cateogry_type }
+    ]
+  }
+  
+  
+  console.log('修正后的查询条件:', queryCondition)
+  
   const shopRes = await db.collection('shop')
-    .where(where)
+    .where(queryCondition)
     .skip((page - 1) * limit)
     .limit(limit)
     .get()
   
   const countRes = await db.collection('shop')
-    .where(where)
+    .where(queryCondition)
     .count()
+  
+  console.log('查询结果详情:', shopRes.data)
   
   console.log('查询结果数量:', shopRes.data.length)
   
@@ -229,30 +265,127 @@ async function getShopDetail(shopId) {
  * @param {Object} params - 更新参数
  */
 async function updateShop(params) {
-  const { shopId, shopData, openid } = params
+  const { shopId, shopData } = params
+  
+  // 获取当前用户的 openid
+  const wxContext = cloud.getWXContext()
+  const openid = wxContext.OPENID
+  
+  console.log('updateShop - 参数:', { shopId, openid })
   
   // 权限校验：检查是否为该商铺的拥有者
   const userRes = await db.collection('user').where({
     openid: openid
   }).get()
   
-  if (userRes.data.length === 0 || userRes.data[0].shop_id !== shopId) {
+  console.log('updateShop - 用户查询结果:', userRes.data)
+  
+  if (userRes.data.length === 0) {
+    console.error('updateShop - 用户不存在')
+    return {
+      code: -1,
+      message: '用户不存在'
+    }
+  }
+  
+  const user = userRes.data[0]
+  console.log('updateShop - 用户信息:', user)
+  
+  // 类型转换，确保比较时类型一致
+  const userShopId = user.shop_id
+  const targetShopId = shopId
+  
+  console.log('updateShop - 权限校验:', { userShopId, targetShopId, equal: userShopId == targetShopId })
+  
+  if (userShopId != targetShopId) {
+    console.error('updateShop - 权限校验失败')
     return {
       code: -1,
       message: '无权操作'
     }
   }
   
-  await db.collection('shop').doc(shopId).update({
-    data: {
-      ...shopData,
+  try {
+    // 删除 _id、status、expire_date 字段，防止更新失败
+    const { _id, status, expire_date, lat, lng, ...otherData } = shopData
+    
+    // 处理经纬度字段，确保为数字类型
+    const updateData = {
+      ...otherData,
       update_time: db.serverDate()
     }
-  })
+    
+    // 只有当 lat 和 lng 存在时才更新
+    if (lat !== undefined && lng !== undefined) {
+      updateData.lat = Number(lat)
+      updateData.lng = Number(lng)
+    }
+    
+    await db.collection('shop').doc(shopId).update({
+      data: updateData
+    })
+    
+    // 如果更新了到期日期，同步更新用户的到期日期
+    if (shopData.expire_date) {
+      await db.collection('user').where({
+        shop_id: shopId
+      }).update({
+        data: {
+          expire_date: shopData.expire_date,
+          update_time: db.serverDate()
+        }
+      })
+      console.log('updateShop - 同步更新用户到期日期成功')
+    }
+    
+    console.log('updateShop - 更新成功')
+    return {
+      code: 0,
+      message: '更新成功'
+    }
+  } catch (err) {
+    console.error('updateShop - 更新失败:', err)
+    return {
+      code: -1,
+      message: '更新失败: ' + err.message
+    }
+  }
+}
+
+/**
+ * 创建商铺
+ * @param {Object} params - 创建参数
+ */
+async function createShop(params) {
+  const { shopData, openid } = params
   
-  return {
-    code: 0,
-    message: '更新成功'
+  try {
+    // 处理经纬度字段
+    const { lat, lng, ...otherData } = shopData
+    
+    const result = await db.collection('shop').add({
+      data: {
+        ...otherData,
+        lat: lat !== undefined ? Number(lat) : null,
+        lng: lng !== undefined ? Number(lng) : null,
+        status: 1, // 免费入驻直接上架
+        create_time: db.serverDate(),
+        update_time: db.serverDate()
+      }
+    })
+    
+    console.log('createShop - 创建成功:', result)
+    return {
+      code: 0,
+      message: '创建成功',
+      data: result._id
+    }
+  } catch (err) {
+    console.error('createShop - 创建失败:', err)
+    return {
+      code: -1,
+      message: '创建失败: ' + err.message
+    }
   }
 }
 

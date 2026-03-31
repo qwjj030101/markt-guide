@@ -11,7 +11,9 @@ Page({
       phone: '',          // 联系电话
       address: '',        // 商铺地址
       businessHours: '',  // 营业时间
-      description: ''     // 商铺描述
+      description: '',    // 商铺描述
+      lat: null,          // 纬度
+      lng: null           // 经度
     },
     productList: []       // 商品列表
   },
@@ -21,7 +23,12 @@ Page({
    * @param {Object} options - 页面参数，包含商铺ID
    */
   onLoad(options) {
-    const shopId = options.id
+    // 兼容不同的参数名：id 或 shop_id
+    const shopId = options.id || options.shop_id || ''
+    if (!shopId) {
+      wx.showToast({ title: '参数错误', icon: 'none' })
+      return
+    }
     this.setData({ shopId })
     this.loadShopInfo(shopId)
     this.loadProductList(shopId)
@@ -42,11 +49,35 @@ Page({
    * 调用系统地图功能显示商铺位置
    */
   onAddressTap() {
+    const { lat, lng, name, address } = this.data.shopInfo
+    
+    // 检查坐标是否存在
+    if (!lat || !lng) {
+      wx.showToast({
+        title: '位置信息缺失，无法导航',
+        icon: 'none'
+      })
+      return
+    }
+    
+    // 转换为数字类型
+    const latitude = Number(lat)
+    const longitude = Number(lng)
+    
+    // 检查是否为有效数字
+    if (isNaN(latitude) || isNaN(longitude)) {
+      wx.showToast({
+        title: '位置信息无效，无法导航',
+        icon: 'none'
+      })
+      return
+    }
+    
     wx.openLocation({
-      latitude: this.data.shopInfo.lat,
-      longitude: this.data.shopInfo.lng,
-      name: this.data.shopInfo.name,
-      address: this.data.shopInfo.address
+      latitude: latitude,
+      longitude: longitude,
+      name: name,
+      address: address
     })
   },
 
@@ -72,7 +103,14 @@ Page({
   // 直接使用云函数返回的临时URL，不再需要前端转换
   // 原因：云函数已经在返回前将云存储file ID转换为临时URL
   // 这样可以避免前端权限问题，即使云存储文件权限是"仅创建者可读写"
-  const shopInfo = res.result.data
+  let shopInfo = res.result.data
+  // 字段映射：支持 latitude/longitude 和 lat/lng
+  if (shopInfo.latitude && !shopInfo.lat) {
+    shopInfo.lat = shopInfo.latitude
+  }
+  if (shopInfo.longitude && !shopInfo.lng) {
+    shopInfo.lng = shopInfo.longitude
+  }
   console.log('获取商铺信息成功，头像:', shopInfo.avatar)
   this.setData({ shopInfo })
 } else {

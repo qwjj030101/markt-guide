@@ -63,9 +63,16 @@ Page({
    * 跳转到商铺管理页面
    */
   onShopTap() {
-    wx.navigateTo({
-      url: '/pages/shop/manage'
-    })
+    const app = getApp()
+    const shopId = app.globalData.shop_id
+    
+    if (shopId) {
+      wx.navigateTo({
+        url: `/pages/shop/manage?shopId=${shopId}`
+      })
+    } else {
+      wx.showToast({ title: '商铺信息不存在', icon: 'none' })
+    }
   },
 
   /**

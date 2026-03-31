@@ -89,6 +89,80 @@ exports.main = async (event, context) => {
         success: true,
         updated: result.updated
       };
+    } else if (action === 'withdraw') {
+      // 撤回响应
+      const { demand_id } = event;
+      console.log('withdraw action - 参数:', { demand_id });
+      
+      // 参数校验
+      if (!demand_id) {
+        console.error('withdraw action - 缺少 demand_id 参数');
+        return { success: false, message: '缺少需求ID' };
+      }
+      
+      try {
+        // 获取当前用户的 openid
+        const wxContext = cloud.getWXContext();
+        const openid = wxContext.OPENID;
+        
+        if (!openid) {
+          console.error('withdraw action - 无法获取 openid');
+          return { success: false, message: '无法获取用户信息' };
+        }
+        
+        // 根据 openid 查询 user 表获取 shop_id
+        const userResult = await db.collection('user').where({ openid: openid }).get();
+        
+        if (userResult.data.length === 0) {
+          console.error('withdraw action - 用户不存在');
+          return { success: false, message: '用户不存在' };
+        }
+        
+        const user = userResult.data[0];
+        
+        // 校验当前用户是否是商户
+        if (user.role !== 1) {
+          console.error('withdraw action - 用户不是商户');
+          return { success: false, message: '只有商户才能撤回响应' };
+        }
+        
+        const shop_id = user.shop_id;
+        
+        if (!shop_id) {
+          console.error('withdraw action - 商户没有 shop_id');
+          return { success: false, message: '商户信息不完整' };
+        }
+        
+        // 查询需求，检查 status 是否为 0
+        const demandResult = await db.collection('demand').doc(demand_id).get();
+        
+        if (!demandResult.data) {
+          console.error('withdraw action - 需求不存在');
+          return { success: false, message: '需求不存在' };
+        }
+        
+        if (demandResult.data.status !== 0) {
+          console.error('withdraw action - 需求已完成，不能撤回');
+          return { success: false, message: '已完成的需求不能撤回' };
+        }
+        
+        // 删除 response 表中 demand_id 和 shop_id 匹配的记录
+        const deleteResult = await db.collection('response')
+          .where({
+            demand_id: demand_id,
+            shop_id: shop_id
+          })
+          .remove();
+        
+        console.log('withdraw action - 删除响应成功:', deleteResult);
+        return {
+          success: true,
+          deleted: deleteResult.stats.removed
+        };
+      } catch (err) {
+        console.error('withdraw action - 撤回失败:', err);
+        return { success: false, message: '撤回失败: ' + err.message };
+      }
     } else if (action === 'list') {
       // 查询需求列表
       let query = db.collection('demand');

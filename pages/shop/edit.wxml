@@ -1,36 +1,88 @@
 <view class="container">
-  <view class="form-section">
-    <view class="form-item">
-      <text class="label">商铺头像</text>
-      <view class="avatar-upload" bindtap="onAvatarTap">
-        <image wx:if="{{formData.avatar}}" src="{{formData.avatar}}" mode="aspectFill"></image>
-        <text wx:else>点击上传</text>
-      </view>
+  <!-- 顶部导航栏 -->
+  <view class="nav-bar">
+    <view class="nav-left" bindtap="onCancel">
+      <text>取消</text>
     </view>
-    <view class="form-item">
-      <text class="label">商铺名称</text>
-      <input class="input" value="{{formData.name}}" bindinput="onNameInput" placeholder="请输入商铺名称" />
-    </view>
-    <view class="form-item">
-      <text class="label">商铺电话</text>
-      <input class="input" value="{{formData.phone}}" bindinput="onPhoneInput" placeholder="请输入商铺电话" />
-    </view>
-    <view class="form-item">
-      <text class="label">商铺地址</text>
-      <view class="address-picker" bindtap="onAddressTap">
-        <text class="address-text">{{formData.address || '请选择地址'}}</text>
-      </view>
-    </view>
-    <view class="form-item">
-      <text class="label">营业时间</text>
-      <input class="input" value="{{formData.businessHours}}" bindinput="onBusinessHoursInput" placeholder="请输入营业时间" />
-    </view>
-    <view class="form-item">
-      <text class="label">商铺简介</text>
-      <textarea class="textarea" value="{{formData.description}}" bindinput="onDescriptionInput" placeholder="请输入商铺简介" />
+    <view class="nav-title">编辑商铺</view>
+    <view class="nav-right" bindtap="onSubmit">
+      <text class="submit-btn">保存</text>
     </view>
   </view>
-  <view class="submit-btn" bindtap="onSubmit">
-    <text>保存</text>
+
+  <!-- 表单内容 -->
+  <view class="form-container">
+    <!-- 头像上传 -->
+    <view class="form-item">
+      <text class="label">商铺头像</text>
+      <view class="avatar-upload">
+        <image class="avatar" src="{{shopInfo.avatar || '/images/R.jpg'}}" mode="aspectFill"></image>
+        <view class="upload-btn" bindtap="chooseAvatar">
+          <text>更换头像</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 商铺名称 -->
+    <view class="form-item">
+      <text class="label">商铺名称</text>
+      <input 
+        class="input" 
+        placeholder="请输入商铺名称" 
+        value="{{shopInfo.name}}" 
+        bindinput="onNameChange"
+      />
+    </view>
+
+    <!-- 联系电话 -->
+    <view class="form-item">
+      <text class="label">联系电话</text>
+      <input 
+        class="input" 
+        placeholder="请输入联系电话" 
+        value="{{shopInfo.phone}}" 
+        bindinput="onPhoneChange"
+        type="number"
+      />
+    </view>
+
+    <!-- 商铺地址 -->
+    <view class="form-item">
+      <text class="label">商铺地址</text>
+      <view class="address-input">
+        <input 
+          class="input address" 
+          placeholder="请选择地址" 
+          value="{{shopInfo.address}}" 
+          bindinput="onAddressChange"
+        />
+        <view class="address-icon" bindtap="chooseAddress">
+          <text>📍</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 商铺简介 -->
+    <view class="form-item">
+      <text class="label">商铺简介</text>
+      <textarea 
+        class="textarea" 
+        placeholder="请输入商铺简介" 
+        value="{{shopInfo.description}}" 
+        bindinput="onDescriptionChange"
+        auto-height
+      ></textarea>
+    </view>
+
+    <!-- 营业时间 -->
+    <view class="form-item">
+      <text class="label">营业时间</text>
+      <input 
+        class="input" 
+        placeholder="如：09:00-18:00" 
+        value="{{shopInfo.businessHours}}" 
+        bindinput="onBusinessHoursChange"
+      />
+    </view>
   </view>
 </view>

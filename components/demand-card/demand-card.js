@@ -8,6 +8,7 @@ Component({
       value: {},
       observer: function(newVal, oldVal) {
         console.log('需求卡片接收到数据:', newVal);
+        console.log('需求卡片 - hasResponded:', newVal.hasResponded, 'status:', newVal.status);
         // 只在 demand 对象变化时更新显示的响应列表
         this.setData({ showMore: false }, () => {
           this.updateDisplayResponses();
@@ -67,6 +68,14 @@ Component({
     onTapComplete(e) {
       const demandId = e.currentTarget.dataset.demandId;
       this.triggerEvent('tapComplete', { demand_id: demandId });
+    },
+
+    /**
+     * 点击"撤回"按钮
+     */
+    onTapWithdraw(e) {
+      const demandId = e.currentTarget.dataset.demandId;
+      this.triggerEvent('tapWithdraw', { demand_id: demandId });
     },
 
     /**

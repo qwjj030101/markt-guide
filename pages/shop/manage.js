@@ -20,7 +20,23 @@ Page({
    * 页面加载时执行
    * 初始化加载商铺信息和商品列表
    */
-  onLoad() {
+  onLoad(options) {
+    // 权限校验
+    const app = getApp()
+    const role = app.globalData.role
+    const shop_id = app.globalData.shop_id
+    const shopId = options.shopId || ''
+    
+    // 检查权限：必须是商户且 shop_id 匹配
+    if (role !== 1 || shop_id !== shopId) {
+      wx.showToast({ title: '无权限', icon: 'none' })
+      wx.redirectTo({
+        url: `/pages/shop/detail?shop_id=${shopId}`
+      })
+      return
+    }
+    
+    this.setData({ shopId })
     this.loadShopInfo()
     this.loadProductList()
   },
@@ -82,12 +98,40 @@ Page({
    * 从服务器获取当前商户的商铺信息
    */
   loadShopInfo() {
-    wx.request({
-      url: 'https://api.example.com/shop/info',
-      success: (res) => {
-        this.setData({ shopInfo: res.data })
-      }
-    })
+    const { shopId } = this.data
+    wx.showLoading({ title: '加载中...' })
+    
+    try {
+      wx.cloud.callFunction({
+        name: 'shop',
+        data: {
+          action: 'getDetail',
+          shopId: shopId
+        },
+        success: (res) => {
+          console.log('获取商铺详情成功:', res)
+          if (res.result.code === 0) {
+           const shopInfo = res.result.data;
+           // 添加默认值，防止字段为空
+           shopInfo.businessHours = shopInfo.businessHours || '暂无营业时间';
+           this.setData({ shopInfo });
+          } else {
+            wx.showToast({ title: '加载失败', icon: 'none' })
+          }
+        },
+        fail: (err) => {
+          console.error('获取商铺详情失败:', err)
+          wx.showToast({ title: '加载失败', icon: 'none' })
+        },
+        complete: () => {
+          wx.hideLoading()
+        }
+      })
+    } catch (err) {
+      console.error('获取商铺详情失败:', err)
+      wx.hideLoading()
+      wx.showToast({ title: '加载失败', icon: 'none' })
+    }
   },
 
   /**
@@ -95,11 +139,28 @@ Page({
    * 从服务器获取当前商铺的商品列表
    */
   loadProductList() {
-    wx.request({
-      url: 'https://api.example.com/shop/products',
-      success: (res) => {
-        this.setData({ productList: res.data })
-      }
-    })
+    const { shopId } = this.data
+    
+    try {
+      wx.cloud.callFunction({
+        name: 'shop',
+        data: {
+          action: 'getProducts',
+          shopId: shopId
+        },
+        success: (res) => {
+          console.log('获取商品列表成功:', res)
+          if (res.result.code === 0) {
+            this.setData({ productList: res.result.data })
+          }
+        },
+        fail: (err) => {
+          console.error('获取商品列表失败:', err)
+        }
+      })
+    } catch (err) {
+      console.error('获取商品列表失败:', err)
+      wx.showToast({ title: '加载失败', icon: 'none' })
+    }
   }
 })

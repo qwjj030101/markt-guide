@@ -19,7 +19,8 @@
   
   <!-- 操作按钮 -->
   <view class="demand-actions">
-    <button wx:if="{{demand.isOwn}}" class="btn-complete {{demand.status === 1 ? 'btn-disabled' : ''}}" bindtap="onTapComplete" data-demand-id="{{demand.id}}">已完成</button>
-    <button wx:elif="{{demand.canRespond}}" class="btn-respond {{demand.status === 1 ? 'btn-disabled' : ''}}" bindtap="onTapResponse" data-demand-id="{{demand.id}}">我有货</button>
-  </view>
+  <button wx:if="{{demand.isOwn}}" class="btn-complete {{demand.status === 1 ? 'btn-disabled' : ''}}" bindtap="onTapComplete" data-demand-id="{{demand.id}}">已完成</button>
+  <button wx:elif="{{demand.hasResponded && demand.status === 0}}" class="btn-withdraw" bindtap="onTapWithdraw" data-demand-id="{{demand.id}}">撤回</button>
+  <button wx:elif="{{demand.canRespond}}" class="btn-respond {{demand.status === 1 ? 'btn-disabled' : ''}}" bindtap="onTapResponse" data-demand-id="{{demand.id}}">我有货</button>
+</view>
 </view>
