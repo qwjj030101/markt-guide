@@ -77,7 +77,8 @@
 
 .btn-shop,
 .btn-renew,
-.btn-join {
+.btn-join,
+.btn-buy {
   padding: 30rpx;
   margin-bottom: 20rpx;
   border-radius: 10rpx;
@@ -106,7 +107,8 @@
 }
 
 .btn-renew,
-.btn-join {
+.btn-join,
+.btn-buy {
   background-color: #3cc51f;
   color: #fff;
 }

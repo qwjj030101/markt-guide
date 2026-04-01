@@ -34,8 +34,8 @@ async function loadCategoryCache() {
     
     categoryRes.data.forEach(cat => {
       if (cat.type === 'market' || cat.type === 'shop_category') {
-        categoryCache[cat.type][cat.sort] = cat._id
-        console.log(`添加到缓存: type=${cat.type}, sort=${cat.sort}, _id=${cat._id}`)
+        categoryCache[cat.type][cat._id] = cat.sort
+        console.log(`添加到缓存: type=${cat.type}, _id=${cat._id}, sort=${cat.sort}`)
       }
     })
     
@@ -55,8 +55,8 @@ setInterval(loadCategoryCache, 5 * 60 * 1000)
 exports.main = async (event, context) => {
   const { action } = event
   
-  // 每次都重新加载缓存（临时测试用）
-  //await loadCategoryCache()
+  // 每次都重新加载缓存，确保数据最新
+  await loadCategoryCache()
   
   try {
     switch (action) {
@@ -118,7 +118,7 @@ async function getShopList(params) {
     try {
       if (typeof market_type === 'string' && market_type.length > 10) {
         // 如果传入的是 _id（长字符串），从缓存中查找对应的数字值
-        const marketSort = Object.keys(categoryCache.market).find(sort => categoryCache.market[sort] === market_type)
+        const marketSort = categoryCache.market[market_type]
         if (marketSort) {
           where.market_type = parseInt(marketSort)
           console.log('从缓存获取数字值:', marketSort)
@@ -140,7 +140,7 @@ async function getShopList(params) {
     try {
       if (typeof shop_category === 'string' && shop_category.length > 10) {
         // 如果传入的是 _id（长字符串），从缓存中查找对应的数字值
-        const categorySort = Object.keys(categoryCache.shop_category).find(sort => categoryCache.shop_category[sort] === shop_category)
+        const categorySort = categoryCache.shop_category[shop_category]
         if (categorySort) {
           where.category_type = parseInt(categorySort)
           console.log('从缓存获取数字值:', categorySort)
@@ -174,20 +174,19 @@ async function getShopList(params) {
     })
   }
   
-
   // 添加市场类型过滤
   if (market_type) {
     queryCondition.market_type = where.market_type
   }
   
-  // 添加商铺类型过滤，同时支持两种字段名
-  if (shop_category) {
+  // 添加商铺类型过滤，同时支持多种字段名
+  if (shop_category && where.category_type) {
     queryCondition.$or = [
       { category_type: where.category_type },
-      { cateogry_type: where.cateogry_type }
+      { shop_category: where.category_type }
+      //{ cateogry_type: where.category_type }
     ]
   }
-  
   
   console.log('修正后的查询条件:', queryCondition)
   
@@ -357,33 +356,95 @@ async function updateShop(params) {
  * @param {Object} params - 创建参数
  */
 async function createShop(params) {
-  const { shopData, openid } = params
+  const { shopData } = params
   
   try {
-    // 处理经纬度字段
-    const { lat, lng, ...otherData } = shopData
+    // 获取当前用户的 openid
+    const wxContext = cloud.getWXContext()
+    const openid = wxContext.OPENID
+    console.log('createShop - 当前用户 openid:', openid)
+    
+    // 处理经纬度字段和分类字段
+    const { lat, lng, market_type, category_type, ...otherData } = shopData
+    
+    // 处理市场类型
+    let marketTypeValue = null
+    if (market_type) {
+      if (typeof market_type === 'string' && market_type.length > 10) {
+        // 如果传入的是 _id（长字符串），从缓存中查找对应的数字值
+        marketTypeValue = categoryCache.market[market_type]
+        if (marketTypeValue) {
+          marketTypeValue = parseInt(marketTypeValue)
+          console.log('从缓存获取市场类型数字值:', marketTypeValue)
+        } else {
+          console.log('缓存中没有找到对应的市场类型数字值:', market_type)
+        }
+      } else {
+        // 如果传入的是数字，直接使用
+        marketTypeValue = parseInt(market_type)
+        console.log('直接使用市场类型数字值:', market_type)
+      }
+    }
+    
+    // 处理商铺类型
+    let categoryTypeValue = null
+    if (category_type) {
+      if (typeof category_type === 'string' && category_type.length > 10) {
+        // 如果传入的是 _id（长字符串），从缓存中查找对应的数字值
+        categoryTypeValue = categoryCache.shop_category[category_type]
+        if (categoryTypeValue) {
+          categoryTypeValue = parseInt(categoryTypeValue)
+          console.log('从缓存获取商铺类型数字值:', categoryTypeValue)
+        } else {
+          console.log('缓存中没有找到对应的商铺类型数字值:', category_type)
+        }
+      } else {
+        // 如果传入的是数字，直接使用
+        categoryTypeValue = parseInt(category_type)
+        console.log('直接使用商铺类型数字值:', category_type)
+      }
+    }
+    
+    // 计算到期时间：当前时间的两年后
+    const expireDate = new Date()
+    expireDate.setFullYear(expireDate.getFullYear() + 2)
     
     const result = await db.collection('shop').add({
       data: {
         ...otherData,
+        market_type: marketTypeValue,
+        shop_category: categoryTypeValue,
         lat: lat !== undefined ? parseFloat(lat) : null,
         lng: lng !== undefined ? parseFloat(lng) : null,
         status: 1, // 免费入驻直接上架
+        expire_date: expireDate, // 免费入驻，到期日期为当前时间的两年后
         create_time: db.serverDate(),
         update_time: db.serverDate()
       }
     })
     
     console.log('createShop - 创建成功:', result)
+    
+    // 更新用户表，设置 role 为 1（商户），shop_id 为新创建的商铺 ID，expire_date 为相同的到期时间
+    await db.collection('user').where({ openid }).update({
+      data: {
+        role: 1,
+        shop_id: result._id,
+        expire_date: expireDate,
+        update_time: db.serverDate()
+      }
+    })
+    
+    console.log('createShop - 更新用户角色成功')
+    
     return {
-      code: 0,
-      message: '创建成功',
-      data: result._id
+      success: true,
+      shop_id: result._id
     }
   } catch (err) {
     console.error('createShop - 创建失败:', err)
     return {
-      code: -1,
+      success: false,
       message: '创建失败: ' + err.message
     }
   }

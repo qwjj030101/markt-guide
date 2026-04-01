@@ -42,37 +42,118 @@ exports.main = async (event, context) => {
   }
   
   try {
-    // 检查是否已经响应过
-    const existingResponse = await db.collection('response')
-      .where({
-        demand_id: demand_id,
-        shop_id: shop_id
-      })
-      .get();
+    // 获取当前用户的 openid
+    const wxContext = cloud.getWXContext();
+    const openid = wxContext.OPENID;
     
-    if (existingResponse.data.length > 0) {
-      console.error('respond action - 已经响应过该需求');
-      return { success: false, message: '您已经响应过该需求' };
+    if (!openid) {
+      console.error('respond action - 无法获取 openid');
+      return { success: false, message: '无法获取用户信息' };
     }
     
-    // 插入响应数据
-    const result = await db.collection('response').add({
-      data: {
-        demand_id: demand_id,
-        shop_id: shop_id,
-        remark: remark,
-        created_at: new Date()
-      }
-    });
+    // 查询用户信息，获取响应配额
+    const userResult = await db.collection('user').where({ openid: openid }).get();
     
-    console.log('respond action - 插入成功:', result);
-    return {
-      success: true,
-      id: result._id
-    };
+    if (userResult.data.length === 0) {
+      console.error('respond action - 用户不存在');
+      return { success: false, message: '用户不存在' };
+    }
+    
+    const user = userResult.data[0];
+    const responseQuota = user.response_quota || 0;
+    const responsePackageExpire = user.response_package_expire;
+    const currentTime = new Date();
+    
+    console.log('respond action - 用户信息:', { responseQuota, responsePackageExpire, currentTime });
+    
+    // 扣费逻辑
+    if (!responsePackageExpire || new Date(responsePackageExpire) <= currentTime) {
+      // 包月过期或未开通，需要扣配额
+      if (responseQuota <= 0) {
+        console.error('respond action - 响应配额不足');
+        return { success: false, message: 'INSUFFICIENT_QUOTA' };
+      }
+      
+      // 使用事务更新用户配额
+      const transaction = await db.startTransaction();
+      try {
+        // 检查是否已经响应过
+        const existingResponse = await transaction.collection('response')
+          .where({
+            demand_id: demand_id,
+            shop_id: shop_id
+          })
+          .get();
+        
+        if (existingResponse.data.length > 0) {
+          await transaction.rollback();
+          console.error('respond action - 已经响应过该需求');
+          return { success: false, message: '您已经响应过该需求' };
+        }
+        
+        // 插入响应数据
+        const result = await transaction.collection('response').add({
+          data: {
+            demand_id: demand_id,
+            shop_id: shop_id,
+            remark: remark,
+            created_at: new Date()
+          }
+        });
+        
+        // 更新用户响应配额
+        await transaction.collection('user').where({ openid: openid }).update({
+          data: {
+            response_quota: responseQuota - 1,
+            update_time: new Date()
+          }
+        });
+        
+        await transaction.commit();
+        console.log('respond action - 插入成功并扣减配额:', result);
+        return {
+          success: true,
+          id: result._id
+        };
+      } catch (err) {
+        await transaction.rollback();
+        console.error('respond action - 事务失败:', err);
+        return { success: false, message: '操作失败: ' + err.message };
+      }
+    } else {
+      // 包月有效，不扣配额
+      // 检查是否已经响应过
+      const existingResponse = await db.collection('response')
+        .where({
+          demand_id: demand_id,
+          shop_id: shop_id
+        })
+        .get();
+      
+      if (existingResponse.data.length > 0) {
+        console.error('respond action - 已经响应过该需求');
+        return { success: false, message: '您已经响应过该需求' };
+      }
+      
+      // 插入响应数据
+      const result = await db.collection('response').add({
+        data: {
+          demand_id: demand_id,
+          shop_id: shop_id,
+          remark: remark,
+          created_at: new Date()
+        }
+      });
+      
+      console.log('respond action - 插入成功（包月有效）:', result);
+      return {
+        success: true,
+        id: result._id
+      };
+    }
   } catch (err) {
-    console.error('respond action - 插入失败:', err);
-    return { success: false, message: '插入数据失败: ' + err.message };
+    console.error('respond action - 失败:', err);
+    return { success: false, message: '操作失败: ' + err.message };
   }
     } else if (action === 'complete') {
       // 标记需求为已完成

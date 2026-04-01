@@ -8,7 +8,8 @@
     "pages/join/join",
     "pages/pay/pay",
     "pages/shop/edit",
-    "pages/product/edit"
+    "pages/product/edit",
+    "pages/buy/buy"
   ],
   "window": {
     "backgroundTextStyle": "light",

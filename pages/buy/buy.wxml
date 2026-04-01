@@ -1,0 +1,127 @@
+<view class="container">
+  <view class="header">
+    <text class="title">购买响应包</text>
+  </view>
+  
+  <!-- 按次套餐 -->
+  <view class="package-section">
+    <text class="section-title">按次套餐</text>
+    
+    <view class="package-grid">
+      <view class="package-item" bindtap="selectPackage" data-type="per_use" data-count="1" data-price="3">
+        <view class="package-info">
+          <text class="package-name">1次响应</text>
+          <text class="package-desc">适合偶尔响应需求</text>
+        </view>
+        <view class="package-price">
+          <text class="price">¥3</text>
+        </view>
+        <view class="package-select" wx:if="{{selectedPackage.type === 'per_use' && selectedPackage.count === 1}}">
+          <text>✓</text>
+        </view>
+      </view>
+      
+      <view class="package-item" bindtap="selectPackage" data-type="per_use" data-count="10" data-price="20">
+        <view class="package-info">
+          <text class="package-name">10次响应</text>
+          <text class="package-desc">适合小批量响应需求</text>
+        </view>
+        <view class="package-price">
+          <text class="price">¥20</text>
+          <text class="unit-price">（¥2/次）</text>
+        </view>
+        <view class="package-select" wx:if="{{selectedPackage.type === 'per_use' && selectedPackage.count === 10}}">
+          <text>✓</text>
+        </view>
+      </view>
+      
+      <view class="package-item" bindtap="selectPackage" data-type="per_use" data-count="100" data-price="150">
+        <view class="package-info">
+          <text class="package-name">100次响应</text>
+          <text class="package-desc">适合大批量响应需求</text>
+        </view>
+        <view class="package-price">
+          <text class="price">¥150</text>
+          <text class="unit-price">（¥1.5/次）</text>
+        </view>
+        <view class="package-select" wx:if="{{selectedPackage.type === 'per_use' && selectedPackage.count === 100}}">
+          <text>✓</text>
+        </view>
+      </view>
+      
+      <view class="package-item custom-package" bindtap="showCustomCount">
+        <view class="package-info">
+          <text class="package-name">自定义次数</text>
+          <text class="package-desc">根据数量定价</text>
+        </view>
+        <view class="package-price">
+          <text class="price">¥{{customPrice}}</text>
+          <text class="unit-price">（{{customCount}}次）</text>
+        </view>
+        <view class="package-select" wx:if="{{selectedPackage.type === 'per_use' && selectedPackage.count === 'custom'}}">
+          <text>✓</text>
+        </view>
+      </view>
+    </view>
+  </view>
+  
+  <!-- 无限响应套餐 -->
+  <view class="package-section">
+    <text class="section-title">无限响应套餐</text>
+    
+    <view class="package-grid">
+      <view class="package-item" bindtap="selectPackage" data-type="monthly" data-count="30" data-price="88">
+        <view class="package-info">
+          <text class="package-name">1个月</text>
+          <text class="package-desc">30天内无限次响应</text>
+        </view>
+        <view class="package-price">
+          <text class="price">¥88</text>
+        </view>
+        <view class="package-select" wx:if="{{selectedPackage.type === 'monthly' && selectedPackage.count === 30}}">
+          <text>✓</text>
+        </view>
+      </view>
+      
+      <view class="package-item" bindtap="selectPackage" data-type="monthly" data-count="90" data-price="200">
+        <view class="package-info">
+          <text class="package-name">3个月</text>
+          <text class="package-desc">90天内无限次响应</text>
+        </view>
+        <view class="package-price">
+          <text class="price">¥200</text>
+        </view>
+        <view class="package-select" wx:if="{{selectedPackage.type === 'monthly' && selectedPackage.count === 90}}">
+          <text>✓</text>
+        </view>
+      </view>
+      
+      <view class="package-item" bindtap="selectPackage" data-type="monthly" data-count="365" data-price="666">
+        <view class="package-info">
+          <text class="package-name">1年</text>
+          <text class="package-desc">365天内无限次响应</text>
+        </view>
+        <view class="package-price">
+          <text class="price">¥666</text>
+        </view>
+        <view class="package-select" wx:if="{{selectedPackage.type === 'monthly' && selectedPackage.count === 365}}">
+          <text>✓</text>
+        </view>
+      </view>
+    </view>
+  </view>
+  
+  <!-- 底部购买按钮 -->
+  <view class="footer">
+    <view class="buy-container">
+      <view class="price-info">
+        <text class="price-label">价格：</text>
+        <text class="price-value">¥{{selectedPackage.price}}</text>
+        <text class="package-info-text" wx:if="{{selectedPackage.name}}">（{{selectedPackage.name}}）</text>
+      </view>
+      <button class="buy-btn" bindtap="confirmBuy" disabled="{{!selectedPackage.type}}">
+        立即购买
+      </button>
+    </view>
+  </view>
+</view>

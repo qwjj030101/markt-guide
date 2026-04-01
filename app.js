@@ -80,6 +80,8 @@ App({
             this.globalData.role = userData.role || 0
             this.globalData.shop_id = userData.shop_id || null
             this.globalData.expire_date = userData.expire_date || null
+            this.globalData.response_quota = userData.response_quota || 0
+            this.globalData.response_package_expire = userData.response_package_expire || null
             
             // 存储用户头像和昵称
             this.globalData.userInfo = {
@@ -98,7 +100,9 @@ App({
               openid: userData.openid,  // 修复：改为 openid
               role: userData.role || 0,
               shop_id: userData.shop_id || null,
-              expire_date: userData.expire_date || null
+              expire_date: userData.expire_date || null,
+              response_quota: userData.response_quota || 0,
+              response_package_expire: userData.response_package_expire || null
             }
             wx.setStorageSync('userInfo', cacheData)
             console.log('用户信息已存入本地缓存:', cacheData)
@@ -184,6 +188,8 @@ App({
         this.globalData.role = cacheData.role || 0
         this.globalData.shop_id = cacheData.shop_id || null
         this.globalData.expire_date = cacheData.expire_date || null
+        this.globalData.response_quota = cacheData.response_quota || 0
+        this.globalData.response_package_expire = cacheData.response_package_expire || null
       }
       
       // 从本地缓存获取用户微信信息（头像、昵称）
@@ -211,6 +217,12 @@ App({
     }
     if (userData.expire_date !== undefined) {  // 修复：添加括号
       this.globalData.expire_date = userData.expire_date
+    }
+    if (userData.response_quota !== undefined) {  // 修复：添加括号
+      this.globalData.response_quota = userData.response_quota
+    }
+    if (userData.response_package_expire !== undefined) {  // 修复：添加括号
+      this.globalData.response_package_expire = userData.response_package_expire
     }
     if (userData.userInfo) {  // 修复：添加括号
       this.globalData.userInfo = userData.userInfo

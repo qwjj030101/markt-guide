@@ -91,9 +91,16 @@ Page({
       placeholderText: '请输入商户备注',
       success: (res) => {
         if (res.confirm && res.content) {
-          // 获取当前商户的 shop_id（这里需要根据实际情况获取）
+          // 获取当前商户的 shop_id
           const app = getApp()
-          const shopId = app.globalData.shop_id || 'default_shop_id'
+          const shopId = app.globalData.shop_id
+          
+          console.log('响应需求 - 需求ID:', id, '商户ID:', shopId, '备注:', res.content)
+          
+          if (!shopId) {
+            wx.showToast({ title: '商户信息不存在', icon: 'none' })
+            return
+          }
           
           wx.cloud.callFunction({
             name: 'demand',
@@ -104,16 +111,22 @@ Page({
               shop_id: shopId
             },
             success: (result) => {
+              console.log('响应需求 - 云函数返回:', result)
               if (result.result.success) {
                 wx.showToast({ title: '响应成功', icon: 'success' })
                 this.loadDemandList()
               } else {
-                wx.showToast({ title: '操作失败', icon: 'none' })
+                console.error('响应需求 - 失败:', result.result.message)
+                if (result.result.message === 'INSUFFICIENT_QUOTA') {
+                  wx.showToast({ title: '响应配额不足', icon: 'none' })
+                } else {
+                  wx.showToast({ title: result.result.message || '操作失败', icon: 'none' })
+                }
               }
             },
             fail: (err) => {
-              console.error('响应需求失败:', err)
-              wx.showToast({ title: '操作失败', icon: 'none' })
+              console.error('响应需求 - 云函数调用失败:', err)
+              wx.showToast({ title: '网络错误，请稍后重试', icon: 'none' })
             }
           })
         }

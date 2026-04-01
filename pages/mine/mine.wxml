@@ -20,6 +20,8 @@
       <view class="user-nickname-container">
         <text class="user-nickname">{{userInfo.nickName}}</text>
         <text class="user-days" wx:if="{{isMerchant && isValid}}">店铺到期时间：{{expireDateFormatted}}</text>
+        <text class="user-days" wx:if="{{isMerchant}}">剩余响应次数：{{responseQuota}}</text>
+        <text class="user-days" wx:if="{{isMerchant && responsePackageExpire}}">响应到期时间：{{responsePackageExpire}}</text>
       </view>
     </view>
   </view>
@@ -37,6 +39,11 @@
     </view>
     <view wx:else class="btn-join" bindtap="onJoinTap">
       <text>入驻平台</text>
+    </view>
+    
+    <!-- 购买响应包按钮 -->
+    <view wx:if="{{isMerchant}}" class="btn-buy" bindtap="onBuyTap">
+      <text>购买响应包</text>
     </view>
   </view>
 </view>

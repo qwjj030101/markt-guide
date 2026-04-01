@@ -25,15 +25,29 @@
     </view>
     <view class="form-item">
       <text class="label">商铺地址</text>
-      <view class="address-picker" bindtap="onAddressTap">
-        <text class="address-text">{{formData.address || '请选择地址'}}</text>
+      <input class="input" placeholder="请选择地址" value="{{formData.address}}" bindinput="onAddressInput" />
+      <view class="address-buttons">
+        <button class="address-btn" bindtap="chooseLocation">地图选点</button>
+        <button class="address-btn" bindtap="getCurrentLocation">获取当前位置</button>
       </view>
     </view>
     <view class="form-item">
+      <text class="label">市场分类</text>
+      <custom-picker 
+      items="{{marketTypes}}" 
+      valueKey="name" 
+      placeholder="请选择市场" 
+      bind:change="onMarketChange" 
+    />
+    </view>
+    <view class="form-item">
       <text class="label">商铺类型</text>
-      <picker mode="selector" range="{{shopTypes}}" bindchange="onShopTypeChange">
-        <view class="picker-text">{{formData.shopType || '请选择商铺类型'}}</view>
-      </picker>
+      <custom-picker 
+      items="{{shopTypes}}" 
+      valueKey="name" 
+      placeholder="请选择商铺类型" 
+      bind:change="onShopTypeChange" 
+    />
     </view>
     <view class="form-item">
       <text class="label">商铺简介</text>

@@ -23,7 +23,7 @@ exports.main = async (event, context) => {
       case 'login':
         return await login(code)
       case 'getUserInfo':
-        return await getUserInfo(event.openid)
+        return await getUserInfo()
       case 'checkRole':
         return await checkRole(event.openid)
       case 'updateUserInfo':
@@ -67,6 +67,8 @@ async function login(code) {
       role: 0,        // 0-普通用户
       shop_id: null,
       expire_date: null,
+      response_quota: 3,  // 初始响应配额，3次
+      response_package_expire: null,  // 响应包过期时间，默认null
       create_time: db.serverDate(),
       update_time: db.serverDate()
     }
@@ -87,6 +89,8 @@ async function login(code) {
       role: userData.role,
       shop_id: userData.shop_id,
       expire_date: userData.expire_date,
+      response_quota: userData.response_quota || 0,
+      response_package_expire: userData.response_package_expire || null,
       nickname: userData.nickname,
       avatar: userData.avatar
     }
@@ -95,9 +99,13 @@ async function login(code) {
 
 /**
  * 获取用户信息
- * @param {string} openid - 用户openid
+ * 从 wxContext 获取 openid
  */
-async function getUserInfo(openid) {
+async function getUserInfo() {
+  // 从 wxContext 获取 openid
+  const wxContext = cloud.getWXContext()
+  const openid = wxContext.OPENID
+  
   const userRes = await db.collection('user').where({
     openid: openid
   }).get()

@@ -1,0 +1,12 @@
+<view class="custom-picker">
+  <picker 
+    bindchange="onPickerChange" 
+    value="{{selectedIndex}}" 
+    range="{{displayItems}}"
+  >
+    <view class="picker-content">
+      <text wx:if="{{selectedName}}" class="selected-text">{{selectedName}}</text>
+      <text wx:else class="placeholder-text">{{placeholder}}</text>
+    </view>
+  </picker>
+</view>
