@@ -152,9 +152,8 @@ Page({
    * 跳转到付费页面进行会员续费
    */
   onRenewTap() {
-    wx.navigateTo({
-      url: '/pages/pay/pay'
-    })
+    // 推广期间入驻免费，暂时禁用续费功能
+    console.log('推广期间入驻免费，暂时禁用续费功能')
   },
 
   /**

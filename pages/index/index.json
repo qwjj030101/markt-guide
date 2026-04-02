@@ -1,8 +1,7 @@
 {
   "navigationBarTitleText": "首页",
   "usingComponents": {
-    "swiper-ad": "../../components/swiper-ad/swiper-ad",
-    "test-component": "../../components/test-component/test-component"  
+    "swiper-ad": "../../components/swiper-ad/swiper-ad"  
   },
     "enablePullDownRefresh": true
 }

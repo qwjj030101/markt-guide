@@ -1,21 +1,18 @@
 <view class="container">
-  <view class="banner">
-    <swiper indicator-dots autoplay circular>
-      <swiper-item wx:for="{{banners}}" wx:key="id">
-        <image src="{{item.image}}" mode="aspectFill" bindtap="onBannerTap" data-link="{{item.link}}"></image>
-      </swiper-item>
-    </swiper>
-  </view>
+  <swiper-ad banners="{{banners}}" bind:adTap="onAdTap"></swiper-ad>
   <view class="page-title">{{pageTitle}}</view>
   <view class="demand-list">
      <demand-card 
       wx:for="{{demandList}}" 
       wx:key="id" 
       demand="{{item}}" 
+      userQuota="{{userQuota}}" 
+      userPackageExpire="{{userPackageExpire}}" 
       bind:tapShop="onTapShop" 
       bind:tapResponse="onTapResponse" 
       bind:tapComplete="onTapComplete" 
       bind:tapWithdraw="onDemandWithdraw"
+      bind:needBuy="onNeedBuy"
     />
   </view>
   <view class="publish-btn"  bindtap="onPublish">

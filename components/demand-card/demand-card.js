@@ -14,6 +14,14 @@ Component({
           this.updateDisplayResponses();
         });
       }
+    },
+    userQuota: {
+      type: Number,
+      value: 0
+    },
+    userPackageExpire: {
+      type: String,
+      value: ''
     }
   },
 
@@ -42,7 +50,7 @@ Component({
      */
     onTapResponse(e) {
       const demandId = e.currentTarget.dataset.demandId;
-      const { demand } = this.properties;
+      const { demand, userQuota, userPackageExpire } = this.properties;
       
       console.log('点击我有货按钮 - demandId:', demandId, 'demand.status:', demand.status);
       
@@ -57,9 +65,23 @@ Component({
         return;
       }
       
-      console.log('需求未完成，触发响应事件');
-      // 触发响应事件
-      this.triggerEvent('tapResponse', { demand_id: demandId });
+      // 检查响应配额
+      console.log('检查响应配额 - userQuota:', userQuota, 'userPackageExpire:', userPackageExpire);
+      
+      // 检查是否有响应配额或无限响应套餐
+      const now = new Date();
+      const hasQuota = userQuota > 0;
+      const hasValidPackage = userPackageExpire && new Date(userPackageExpire) > now;
+      
+      if (hasQuota || hasValidPackage) {
+        console.log('有响应配额，触发响应事件');
+        // 触发响应事件
+        this.triggerEvent('tapResponse', { demand_id: demandId });
+      } else {
+        console.log('响应配额不足，触发购买事件');
+        // 触发购买事件
+        this.triggerEvent('needBuy', { demand_id: demandId });
+      }
     },
 
     /**

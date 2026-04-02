@@ -120,11 +120,11 @@ Page({
       },
       {
         image: '/images/R 1.jpg',
-        url: '/pages/shop/detail?id=2'
+        url: '/pages/shop/detail?id=eecf6b8e69cbc2ec00210317500f7147'
       },
       {
         image: '/images/R2.jpg',
-        url: '/pages/shop/detail?id=3'
+        url: '/pages/shop/detail?id=eecf6b8e69c28d1700133b091a78a84a'
       }
     ]
     

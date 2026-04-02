@@ -459,10 +459,27 @@ async function getProducts(shopId) {
     shop_id: shopId
   }).get()
   
+  // 处理商品图片，将云存储file ID转换为临时URL
+  const processedProducts = await Promise.all(productRes.data.map(async (product) => {
+    if (product.image && product.image.startsWith('cloud://')) {
+      try {
+        const tempRes = await cloud.getTempFileURL({
+          fileList: [product.image]
+        })
+        if (tempRes.fileList[0].tempFileURL) {
+          product.image = tempRes.fileList[0].tempFileURL
+        }
+      } catch (err) {
+        console.error('获取商品图片临时URL失败:', err)
+      }
+    }
+    return product
+  }))
+  
   return {
     code: 0,
     message: '获取成功',
-    data: productRes.data
+    data: processedProducts
   }
 }
 

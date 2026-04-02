@@ -34,11 +34,17 @@
     </view>
     
     <!-- 根据角色显示不同按钮 -->
-    <view wx:if="{{isMerchant && isValid}}" class="btn-renew" bindtap="onRenewTap">
+    <!-- 商户且会员有效时显示续费按钮（暂时隐藏） -->
+    <view wx:if="{{isMerchant && isValid && false}}" class="btn-renew" bindtap="onRenewTap">
       <text>续费</text>
     </view>
-    <view wx:else class="btn-join" bindtap="onJoinTap">
+    <!-- 非商户时显示入驻平台按钮 -->
+    <view wx:elif="{{!isMerchant}}" class="btn-join" bindtap="onJoinTap">
       <text>入驻平台</text>
+    </view>
+    <!-- 商户但会员无效时，不显示任何按钮 -->
+    <view wx:else>
+      <!-- 商户但会员无效时的处理 -->
     </view>
     
     <!-- 购买响应包按钮 -->

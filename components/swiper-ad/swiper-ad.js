@@ -42,11 +42,11 @@ Component({
       console.log('点击的轮播图数据:', banner)
       
       if (banner && banner.url) {
-        console.log('跳转到:', banner.url)
-        wx.navigateTo({
-          url: banner.url
-        })
-        } else {
+        
+        console.log('跳转到:',banner.url)
+        // 触发 adTap 事件，让父组件处理跳转
+        wx . navigateTo ({url: banner . url})
+      } else {
         console.log('轮播图数据或链接不存在')
       }
     }

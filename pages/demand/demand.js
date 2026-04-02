@@ -7,7 +7,92 @@ Page({
     banners: [],
     pageTitle: '',
     isMerchant: false,
-    demandList: []
+    demandList: [],
+    userQuota: 0,
+    userPackageExpire: ''
+  },
+
+  /**
+   * 加载广告数据
+   * 从云数据库 ads 集合获取广告列表
+   */
+  loadAds() {
+    wx.cloud.callFunction({
+      name: 'ads',
+      data: {
+        action: 'list'
+      },
+      success: (result) => {
+        if (result.result.success) {
+          this.setData({
+            banners: result.result.data
+          })
+        } else {
+          // 如果云函数调用失败，使用本地测试数据
+          this.setData({
+            banners: [
+              { id: 1, image: '/images/R.jpg', link: '/pages/shop/detail?id=1' },
+              { id: 2, image: '/images/R 1.jpg', link: '/pages/shop/detail?id=2' },
+              { id: 3, image: '/images/R2.jpg', link: '/pages/shop/detail?id=3' }
+            ]
+          })
+        }
+      },
+      fail: (err) => {
+        console.error('加载广告失败:', err)
+        // 使用本地测试数据
+        this.setData({
+          banners: [
+            { id: 1, image: '/images/R.jpg', link: '/pages/shop/detail?id=1' },
+            { id: 2, image: '/images/R 1.jpg', link: '/pages/shop/detail?id=2' },
+            { id: 3, image: '/images/R2.jpg', link: '/pages/shop/detail?id=3' }
+          ]
+        })
+      }
+    })
+  },
+
+  /**
+   * 广告点击事件
+   * @param {Object} e - 事件对象
+   */
+  onAdTap(e) {
+    const link = e.detail.link
+    console.log('广告点击:', link)
+    
+    if (!link) {
+      return
+    }
+    
+    // 判断链接类型
+    if (link.startsWith('http')) {
+      // 外部链接，使用 web-view 打开
+      wx.navigateTo({
+        url: `/pages/webview/webview?url=${encodeURIComponent(link)}`
+      })
+    } else if (link.startsWith('/pages/')) {
+      // 内部页面链接
+      wx.navigateTo({
+        url: link
+      })
+    } else if (link.startsWith('wx')) {
+      // 其他小程序链接
+      wx.navigateToMiniProgram({
+        appId: link,
+        success: (res) => {
+          console.log('跳转小程序成功:', res)
+        },
+        fail: (err) => {
+          console.error('跳转小程序失败:', err)
+          wx.showToast({ title: '跳转失败', icon: 'none' })
+        }
+      })
+    } else {
+      // 默认使用 navigateTo
+      wx.navigateTo({
+        url: link
+      })
+    }
   },
 
   /**
@@ -15,7 +100,7 @@ Page({
    * 初始化加载轮播图、用户信息和需求列表
    */
   onLoad() {
-    this.loadBanners()
+    this.loadAds()
     this.loadUserInfo()
   },
 
@@ -289,8 +374,17 @@ Page({
     const app = getApp()
     const role = app.globalData.role
     const openid = app.globalData.openid
+    const response_quota = app.globalData.response_quota || 0
+    const response_package_expire = app.globalData.response_package_expire || ''
     
     console.log('加载需求列表 - 用户角色:', role, 'openid:', openid)
+    console.log('加载需求列表 - 响应配额:', response_quota, '响应包过期时间:', response_package_expire)
+    
+    // 更新页面数据
+    this.setData({
+      userQuota: response_quota,
+      userPackageExpire: response_package_expire
+    })
     
     // 根据用户角色决定是否传 user_id
     const data = { action: 'list' }
@@ -372,5 +466,27 @@ Page({
   onTapComplete(e) {
     const demandId = e.detail.demand_id
     this.onComplete({ currentTarget: { dataset: { id: demandId } } })
+  },
+
+  /**
+   * 响应配额不足，需要购买
+   * @param {Object} e - 事件对象
+   */
+  onNeedBuy(e) {
+    const demandId = e.detail.demand_id
+    
+    wx.showModal({
+      title: '响应配额不足',
+      content: '您的响应配额不足，是否前往购买响应包？',
+      confirmText: '前往购买',
+      cancelText: '取消',
+      success: (res) => {
+        if (res.confirm) {
+          wx.navigateTo({
+            url: `/pages/buy/buy?demand_id=${demandId}`
+          })
+        }
+      }
+    })
   }
 })

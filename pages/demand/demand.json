@@ -1,6 +1,7 @@
 {
   "navigationBarTitleText": "一键找货",
   "usingComponents": {
-    "demand-card": "../../components/demand-card/demand-card"
+    "demand-card": "../../components/demand-card/demand-card",
+    "swiper-ad": "/components/swiper-ad/swiper-ad"
   }
 }
