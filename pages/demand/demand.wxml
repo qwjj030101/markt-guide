@@ -1,5 +1,13 @@
 <view class="container">
   <swiper-ad banners="{{banners}}" bind:adTap="onAdTap"></swiper-ad>
+  
+  <!-- 商户订阅消息授权按钮 -->
+  <view wx:if="{{isMerchant}}" class="subscribe-btn-container">
+    <view class="subscribe-btn" bindtap="onSubscribeTap">
+      <text>订阅新需求通知</text>
+    </view>
+  </view>
+  
   <view class="page-title">{{pageTitle}}</view>
   <view class="demand-list">
      <demand-card 

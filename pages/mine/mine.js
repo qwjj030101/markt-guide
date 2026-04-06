@@ -13,7 +13,8 @@ Page({
     remainingDays: 0,     // 剩余天数
     expireDateFormatted: '', // 格式化后的到期时间
     isAuthorized: false,  // 是否已授权
-    isAuthorizing: false  // 是否正在授权中
+    isAuthorizing: false,  // 是否正在授权中
+    showReauthorize: false  // 是否显示重新授权提示
   },
 
   /**
@@ -28,106 +29,91 @@ Page({
    * 页面显示时执行
    * 每次显示页面时刷新用户信息，确保数据最新
    */
-  async onShow() {
+  onShow() {
     const app = getApp()
-    const globalUserInfo = app.globalData.userInfo
-    const role = app.globalData.role
-    const expire_date = app.globalData.expire_date
-    const remainingDays = app.getRemainingDays()
     
-    // 检查是否已授权（是否有用户信息且不是默认值）
-    const isAuthorized = globalUserInfo && (globalUserInfo.nickName !== '微信用户' || globalUserInfo.avatarUrl !== '')
-    const isMerchant = role === 1
-    const isValid = remainingDays > 0
-    const expireDateFormatted = this.formatExpireDate(expire_date)
-    
-    try {
-      // 从数据库获取最新的用户信息
-      const res = await wx.cloud.callFunction({
-        name: 'user',
-        data: {
-          action: 'getUserInfo'
-        }
-      })
-      
-      if (res.result.code === 0) {
-        const userData = res.result.data
-        
-        // 更新全局数据
-        app.globalData.response_quota = userData.response_quota || 0
-        app.globalData.response_package_expire = userData.response_package_expire
-        
-        // 计算响应包是否有效
-        const isResponsePackageValid = this.isResponsePackageValid(userData.response_package_expire)
-        const responsePackageExpireFormatted = this.formatExpireDate(userData.response_package_expire)
-        
-        this.setData({
-          userInfo: globalUserInfo || {
-            avatarUrl: '',
-            nickName: ''
-          },
-          isMerchant: isMerchant,
-          isValid: isValid,
-          remainingDays: remainingDays,
-          expireDateFormatted: expireDateFormatted,
-          responseQuota: userData.response_quota || 0,
-          responsePackageExpire: isResponsePackageValid ? responsePackageExpireFormatted : '',
-          isAuthorized: isAuthorized  // 判断是否已授权
-        })
-        
-        console.log('从数据库加载用户信息成功:', userData)
-        console.log('响应次数:', userData.response_quota || 0)
-        console.log('响应到期时间:', userData.response_package_expire)
-      } else {
-        // 如果获取失败，使用全局数据
-        const response_quota = app.globalData.response_quota || 0
-        const response_package_expire = app.globalData.response_package_expire
-        const isResponsePackageValid = this.isResponsePackageValid(response_package_expire)
-        const responsePackageExpireFormatted = this.formatExpireDate(response_package_expire)
-        
-        this.setData({
-          userInfo: globalUserInfo || {
-            avatarUrl: '',
-            nickName: ''
-          },
-          isMerchant: isMerchant,
-          isValid: isValid,
-          remainingDays: remainingDays,
-          expireDateFormatted: expireDateFormatted,
-          responseQuota: response_quota,
-          responsePackageExpire: isResponsePackageValid ? responsePackageExpireFormatted : '',
-          isAuthorized: isAuthorized  // 判断是否已授权
-        })
-        
-        console.log('从全局数据加载用户信息:', { response_quota, response_package_expire })
-      }
-    } catch (err) {
-      console.error('加载用户信息失败:', err)
-      // 出错时使用全局数据
-      const response_quota = app.globalData.response_quota || 0
-      const response_package_expire = app.globalData.response_package_expire
-      const isResponsePackageValid = this.isResponsePackageValid(response_package_expire)
-      const responsePackageExpireFormatted = this.formatExpireDate(response_package_expire)
-      
+    // 页面显示时，获取最新的用户信息
+    this.setData({
+      isMerchant: app.isMerchant(),
+      isValid: app.getRemainingDays() > 0,
+      shopId: app.globalData.shop_id,
+      responseQuota: app.globalData.response_quota || 0,
+      responsePackageExpire: app.globalData.response_package_expire
+    })
+
+    // 计算并格式化到期日期
+    if (app.globalData.expire_date) {
+      const expireDate = new Date(app.globalData.expire_date)
+      const year = expireDate.getFullYear()
+      const month = String(expireDate.getMonth() + 1).padStart(2, '0')
+      const day = String(expireDate.getDate()).padStart(2, '0')
       this.setData({
-        userInfo: globalUserInfo || {
-          avatarUrl: '',
-          nickName: ''
-        },
-        isMerchant: isMerchant,
-        isValid: isValid,
-        remainingDays: remainingDays,
-        expireDateFormatted: expireDateFormatted,
-        responseQuota: response_quota,
-        responsePackageExpire: isResponsePackageValid ? responsePackageExpireFormatted : '',
-        isAuthorized: isAuthorized  // 判断是否已授权
+        expireDateFormatted: `${year}年${month}月${day}日`
       })
     }
-    
-    console.log('加载用户信息:', this.data.userInfo)
-    console.log('授权状态:', isAuthorized)
-    console.log('用户角色:', role, '是否为商户:', isMerchant)
-    console.log('过期时间:', expire_date, '剩余天数:', remainingDays, '是否有效:', isValid, '格式化到期时间:', expireDateFormatted)
+
+    // 计算并格式化响应包到期日期
+    if (app.globalData.response_package_expire) {
+      const responsePackageExpire = new Date(app.globalData.response_package_expire)
+      const year = responsePackageExpire.getFullYear()
+      const month = String(responsePackageExpire.getMonth() + 1).padStart(2, '0')
+      const day = String(responsePackageExpire.getDate()).padStart(2, '0')
+      const responsePackageExpireFormatted = `${year}年${month}月${day}日`
+      
+      // 检查响应包是否有效
+      const now = new Date()
+      const isResponsePackageValid = responsePackageExpire > now
+      
+      this.setData({
+        responsePackageExpire: isResponsePackageValid ? responsePackageExpireFormatted : ''
+      })
+    }
+
+    // 从数据库获取最新的用户信息，确保数据实时更新
+    try {
+      wx.cloud.callFunction({
+        name: 'user',
+        data: { action: 'getUserInfo' }
+      }).then(res => {
+        if (res.result.code === 0) {
+          const userData = res.result.data
+          app.globalData.response_quota = userData.response_quota || 0
+          app.globalData.response_package_expire = userData.response_package_expire
+          
+          // 计算并格式化响应包到期日期
+          if (userData.response_package_expire) {
+            const responsePackageExpire = new Date(userData.response_package_expire)
+            const year = responsePackageExpire.getFullYear()
+            const month = String(responsePackageExpire.getMonth() + 1).padStart(2, '0')
+            const day = String(responsePackageExpire.getDate()).padStart(2, '0')
+            const responsePackageExpireFormatted = `${year}年${month}月${day}日`
+            
+            // 检查响应包是否有效
+            const now = new Date()
+            const isResponsePackageValid = responsePackageExpire > now
+            
+            this.setData({
+              responseQuota: userData.response_quota || 0,
+              responsePackageExpire: isResponsePackageValid ? responsePackageExpireFormatted : ''
+            })
+          }
+        }
+      }).catch(err => {
+        console.error('获取用户信息失败:', err)
+        // 如果获取失败，使用全局数据
+        this.setData({
+          responseQuota: app.globalData.response_quota || 0,
+          responsePackageExpire: app.globalData.response_package_expire
+        })
+      })
+    } catch (err) {
+      console.error('获取用户信息失败:', err)
+      // 如果获取失败，使用全局数据
+      this.setData({
+        responseQuota: app.globalData.response_quota || 0,
+        responsePackageExpire: app.globalData.response_package_expire
+      })
+    }
   },
 
   /**
@@ -160,7 +146,29 @@ Page({
    * 入驻平台点击事件
    * 跳转到入驻申请页面
    */
-  onJoinTap() {
+  async onJoinTap() {
+    // 检查登录状态
+    const app = getApp()
+    const isLoggedIn = await app.checkLogin()
+    
+    if (!isLoggedIn) {
+      // 未登录，显示提示
+      wx.showModal({
+        title: '提示',
+        content: '请先登录后再申请成为商户',
+        confirmText: '去登录',
+        cancelText: '取消',
+        success: (res) => {
+          if (res.confirm) {
+            // 引导用户点击授权按钮
+            this.onAuthorizeTap()
+          }
+        }
+      })
+      return
+    }
+    
+    // 已登录，跳转到入驻申请页面
     wx.navigateTo({
       url: '/pages/join/join'
     })
@@ -177,10 +185,28 @@ Page({
   },
 
   /**
+   * 跳转到反馈页面
+   */
+  onFeedbackTap() {
+    wx.navigateTo({
+      url: '/pages/feedback/feedback'
+    })
+  },
+
+  /**
    * 授权按钮点击事件
    * 调用 wx.getUserProfile 获取用户信息
    */
   onAuthorizeTap() {
+    // 检查隐私协议同意状态
+    const hasAgreedPrivacy = wx.getStorageSync('hasAgreedPrivacy')
+    if (!hasAgreedPrivacy) {
+      wx.navigateTo({
+        url: '/pages/privacy/privacy'
+      })
+      return
+    }
+
     // 防止重复点击
     if (this.data.isAuthorizing) {
       return
@@ -191,34 +217,109 @@ Page({
     // 设置授权中状态
     this.setData({ isAuthorizing: true })
     
-    // 注意：从2022年11月开始，wx.getUserProfile不再支持获取用户头像和昵称
-    // 这里使用模拟数据来演示，实际项目中可以引导用户手动输入
-    const mockUserInfo = {
-      nickName: '微信用户' + Math.floor(Math.random() * 10000),
-      avatarUrl: '' // 空头像，实际项目中可以使用默认头像
-    }
-    
-    console.log('模拟获取用户信息:', mockUserInfo)
-    
-    // 存储用户信息到globalData
-    app.globalData.userInfo = mockUserInfo
-    
-    // 存储用户信息到本地缓存
-    try {
-      wx.setStorageSync('userInfoWechat', mockUserInfo)
-      console.log('用户信息已存入本地缓存')
-    } catch (err) {
-      console.error('缓存用户信息失败:', err)
-    }
-    
-    // 更新页面数据
-    this.setData({
-      userInfo: mockUserInfo,
-      isAuthorized: true,
-      isAuthorizing: false
+    // 先调用 wx.login 获取 openid
+    wx.login({
+      success: (loginRes) => {
+        if (loginRes.code) {
+          // 调用云函数获取 openid
+          wx.cloud.callFunction({
+            name: 'user',
+            data: {
+              action: 'login',
+              code: loginRes.code
+            }
+          }).then((loginResult) => {
+            if (loginResult.result && loginResult.result.code === 0 && loginResult.result.data) {
+              const userData = loginResult.result.data
+              app.globalData.openid = userData.openid
+              app.globalData.role = userData.role || 0
+              app.globalData.shop_id = userData.shop_id || null
+              app.globalData.expire_date = userData.expire_date || null
+              app.globalData.response_quota = userData.response_quota || 0
+              app.globalData.response_package_expire = userData.response_package_expire || null
+              
+              // 存储到本地缓存
+              try {
+                wx.setStorageSync('userInfo', {
+                  openid: userData.openid,
+                  role: userData.role || 0,
+                  shop_id: userData.shop_id || null,
+                  expire_date: userData.expire_date || null,
+                  response_quota: userData.response_quota || 0,
+                  response_package_expire: userData.response_package_expire || null
+                })
+              } catch (err) {
+                console.error('缓存用户信息失败:', err)
+              }
+              
+              // 然后调用 wx.getUserProfile 获取头像和昵称
+              wx.getUserProfile({
+                desc: '用于完善用户资料，包括头像和昵称',
+                success: (profileRes) => {
+                  console.log('获取用户信息成功:', profileRes.userInfo)
+                  
+                  // 存储用户信息到globalData
+                  app.globalData.userInfo = profileRes.userInfo
+                  
+                  // 存储用户信息到本地缓存
+                  try {
+                    wx.setStorageSync('userInfoWechat', profileRes.userInfo)
+                    console.log('用户信息已存入本地缓存')
+                  } catch (err) {
+                    console.error('缓存用户信息失败:', err)
+                  }
+                  
+                  // 同步到数据库
+                  this.updateUserInfoToDB()
+                  
+                  // 更新页面数据
+                  this.setData({
+                    userInfo: profileRes.userInfo,
+                    isAuthorized: true,
+                    isAuthorizing: false,
+                    showReauthorize: false
+                  })
+                  
+                  console.log('授权完成，用户信息:', profileRes.userInfo)
+                },
+                fail: (err) => {
+                  console.log('用户拒绝授权:', err)
+                  
+                  // 显示重新授权提示
+                  this.setData({
+                    isAuthorizing: false,
+                    showReauthorize: true
+                  })
+                  
+                  // 提示用户
+                  wx.showToast({ 
+                    title: '您未授权，无法获取头像和昵称', 
+                    icon: 'none' 
+                  })
+                }
+              })
+            } else {
+              console.error('登录失败:', loginResult.result)
+              this.setData({ isAuthorizing: false })
+              wx.showToast({ title: '登录失败', icon: 'none' })
+            }
+          }).catch((err) => {
+            console.error('云函数调用失败:', err)
+            this.setData({ isAuthorizing: false })
+            wx.showToast({ title: '登录失败', icon: 'none' })
+          })
+        } else {
+          console.error('wx.login 失败:', loginRes)
+          this.setData({ isAuthorizing: false })
+          wx.showToast({ title: '登录失败', icon: 'none' })
+        }
+      },
+      fail: (err) => {
+        console.error('wx.login 失败:', err)
+        this.setData({ isAuthorizing: false })
+        wx.showToast({ title: '登录失败', icon: 'none' })
+      }
     })
-    
-    console.log('授权完成，用户信息:', mockUserInfo)
   },
 
   /**
@@ -232,7 +333,7 @@ Page({
     const remainingDays = app.getRemainingDays()
     
     // 检查是否已授权（是否有用户信息且不是默认值）
-    const isAuthorized = globalUserInfo && (globalUserInfo.nickName !== '微信用户' || globalUserInfo.avatarUrl !== '')
+    const isAuthorized = globalUserInfo && globalUserInfo.nickName && (globalUserInfo.nickName !== '微信用户' || globalUserInfo.avatarUrl)
     
     try {
       // 从数据库获取最新的用户信息
@@ -256,8 +357,8 @@ Page({
         
         this.setData({
           userInfo: globalUserInfo || {
-            avatarUrl: '',
-            nickName: ''
+            avatarUrl: '/images/default-avatar.png',
+            nickName: '未登录'
           },
           isMerchant: role === 1,
           isValid: remainingDays > 0,
@@ -270,8 +371,8 @@ Page({
         // 如果获取失败，使用全局数据
         this.setData({
           userInfo: globalUserInfo || {
-            avatarUrl: '',
-            nickName: ''
+            avatarUrl: '/images/default-avatar.png',
+            nickName: '未登录'
           },
           isMerchant: role === 1,
           isValid: remainingDays > 0,
@@ -286,8 +387,8 @@ Page({
       // 出错时使用全局数据
       this.setData({
         userInfo: globalUserInfo || {
-          avatarUrl: '',
-          nickName: ''
+          avatarUrl: '/images/default-avatar.png',
+          nickName: '未登录'
         },
         isMerchant: role === 1,
         isValid: remainingDays > 0,

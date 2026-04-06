@@ -42,8 +42,27 @@ Page({
     wx.chooseImage({
       count: 1,
       success: (res) => {
-        this.setData({
-          'formData.avatar': res.tempFilePaths[0]
+        const tempFilePaths = res.tempFilePaths[0]
+        wx.showLoading({ title: '上传中...' })
+        
+        // 上传图片到云存储
+        wx.cloud.uploadFile({
+          cloudPath: 'shop_avatars/' + Date.now() + '.jpg',
+          filePath: tempFilePaths,
+          success: (uploadRes) => {
+            console.log('上传头像成功:', uploadRes)
+            this.setData({
+              'formData.avatar': uploadRes.fileID
+            })
+            wx.showToast({ title: '上传成功', icon: 'success' })
+          },
+          fail: (err) => {
+            console.error('上传头像失败:', err)
+            wx.showToast({ title: '上传失败', icon: 'none' })
+          },
+          complete: () => {
+            wx.hideLoading()
+          }
         })
       }
     })

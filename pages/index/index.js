@@ -112,25 +112,39 @@ Page({
 
   // 加载轮播图数据
   loadBanners() {
-    // 使用本地轮播图数据
-    const banners = [
-      {
-        image: '/images/R.jpg',
-        url: '/pages/shop/detail?id=d3a1add769c28d16001336df5c5d21fc'
+    wx.cloud.callFunction({
+      name: 'ad',
+      data: {
+        action: 'list'
       },
-      {
-        image: '/images/R 1.jpg',
-        url: '/pages/shop/detail?id=eecf6b8e69cbc2ec00210317500f7147'
+      success: (result) => {
+        if (result.result.success) {
+          this.setData({
+            banners: result.result.data
+          })
+        } else {
+          // 如果云函数调用失败，使用本地测试数据
+          this.setData({
+            banners: [
+              { id: 1, image: '/images/R.jpg', link: '/pages/shop/detail?id=3a1b727569cd0d75002331e623ed7c1a' },
+              { id: 2, image: '/images/R 1.jpg', link: '/pages/shop/detail?id=2' },
+              { id: 3, image: '/images/R2.jpg', link: '/pages/shop/detail?id=3' }
+            ]
+          })
+        }
       },
-      {
-        image: '/images/R2.jpg',
-        url: '/pages/shop/detail?id=eecf6b8e69c28d1700133b091a78a84a'
+      fail: (err) => {
+        console.error('加载广告失败:', err)
+        // 使用本地测试数据
+        this.setData({
+          banners: [
+            { id: 1, image: '/images/R.jpg', link: '/pages/shop/detail?id=3a1b727569cd0d75002331e623ed7c1a' },
+            { id: 2, image: '/images/R 1.jpg', link: '/pages/shop/detail?id=2' },
+            { id: 3, image: '/images/R2.jpg', link: '/pages/shop/detail?id=3' }
+          ]
+        })
       }
-    ]
-    
-    console.log('轮播图数据:', banners)
-    this.setData({ banners })
-    console.log('轮播图数据设置完成:', this.data.banners)
+    })
   },
 
   // 加载筛选条件数据

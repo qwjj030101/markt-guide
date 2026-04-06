@@ -11,17 +11,18 @@ cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV
 })
 
+
 const db = cloud.database()
 const _ = db.command
 
 // 主入口函数
 exports.main = async (event, context) => {
-  const { action, code } = event
+  const { action, code, userInfo } = event
   
   try {
     switch (action) {
       case 'login':
-        return await login(code)
+        return await login(code, userInfo)
       case 'getUserInfo':
         return await getUserInfo()
       case 'checkRole':
@@ -48,7 +49,7 @@ exports.main = async (event, context) => {
  * 根据 code 获取 openid，查询或创建用户
  * @param {string} code - 微信登录临时凭证
  */
-async function login(code) {
+async function login(code, userInfo) {
   // 获取 openid（云函数中通过 getWXContext 获取）
   const wxContext = cloud.getWXContext()
   const OPENID = wxContext.OPENID
@@ -69,6 +70,8 @@ async function login(code) {
       expire_date: null,
       response_quota: 3,  // 初始响应配额，3次
       response_package_expire: null,  // 响应包过期时间，默认null
+      nickname: userInfo?.nickName || '微信用户',
+      avatar: userInfo?.avatarUrl || '',
       create_time: db.serverDate(),
       update_time: db.serverDate()
     }
@@ -105,6 +108,17 @@ async function getUserInfo() {
   // 从 wxContext 获取 openid
   const wxContext = cloud.getWXContext()
   const openid = wxContext.OPENID
+  
+  console.log('getUserInfo - openid:', openid)
+  
+  // 检查 openid 是否存在
+  if (!openid) {
+    console.error('getUserInfo - openid 为空')
+    return {
+      code: -1,
+      message: '用户未登录'
+    }
+  }
   
   const userRes = await db.collection('user').where({
     openid: openid

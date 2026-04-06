@@ -1,5 +1,7 @@
 {
   "navigationBarTitleText": "一键找货",
+  "enablePullDownRefresh": true,
+  "backgroundTextStyle": "dark",
   "usingComponents": {
     "demand-card": "../../components/demand-card/demand-card",
     "swiper-ad": "/components/swiper-ad/swiper-ad"

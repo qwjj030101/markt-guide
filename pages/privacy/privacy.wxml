@@ -1,0 +1,27 @@
+<view class="container">
+  <view class="modal-content">
+    <text class="title">欢迎使用市场指南</text>
+    <scroll-view class="content">
+      <text class="content-text">
+        我们尊重并保护用户隐私，在使用本小程序前，请您仔细阅读以下协议：
+        \n\n
+        《用户协议》
+        \n
+        1. 您在使用本小程序时，应当遵守法律法规，不得利用本小程序从事违法活动。
+        2. 您应当对自己在本小程序上的行为负责，不得损害他人合法权益。
+        3. 我们有权根据法律法规和运营需要，修改本协议。
+        \n\n
+        《隐私政策》
+        \n
+        1. 我们会收集您的微信 openid、头像和昵称（仅在您授权时）。
+        2. 我们会收集商户的店铺名称、地址、电话等信息（仅在您成为商户时）。
+        3. 我们将您的信息存储在云开发数据库中，采取加密措施保护您的信息安全。
+        4. 您有权查看、修改、删除您的个人信息。
+      </text>
+    </scroll-view>
+    <view class="buttons">
+      <button bindtap="onReject" class="reject-btn">拒绝</button>
+      <button bindtap="onAccept" class="accept-btn">同意并继续</button>
+    </view>
+  </view>
+</view>

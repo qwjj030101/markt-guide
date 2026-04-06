@@ -18,7 +18,7 @@ Page({
    */
   loadAds() {
     wx.cloud.callFunction({
-      name: 'ads',
+      name: 'ad',
       data: {
         action: 'list'
       },
@@ -31,7 +31,7 @@ Page({
           // 如果云函数调用失败，使用本地测试数据
           this.setData({
             banners: [
-              { id: 1, image: '/images/R.jpg', link: '/pages/shop/detail?id=1' },
+              { id: 1, image: '/images/R.jpg', link: '/pages/shop/detail?id=3a1b727569cd0d75002331e623ed7c1a' },
               { id: 2, image: '/images/R 1.jpg', link: '/pages/shop/detail?id=2' },
               { id: 3, image: '/images/R2.jpg', link: '/pages/shop/detail?id=3' }
             ]
@@ -43,7 +43,7 @@ Page({
         // 使用本地测试数据
         this.setData({
           banners: [
-            { id: 1, image: '/images/R.jpg', link: '/pages/shop/detail?id=1' },
+            { id: 1, image: '/images/R.jpg', link: '/pages/shop/detail?id=3a1b727569cd0d75002331e623ed7c1a' },
             { id: 2, image: '/images/R 1.jpg', link: '/pages/shop/detail?id=2' },
             { id: 3, image: '/images/R2.jpg', link: '/pages/shop/detail?id=3' }
           ]
@@ -65,7 +65,7 @@ Page({
     }
     
     // 判断链接类型
-    if (link.startsWith('http')) {
+    if (link.startsWith('http://') || link.startsWith('https://')) {
       // 外部链接，使用 web-view 打开
       wx.navigateTo({
         url: `/pages/webview/webview?url=${encodeURIComponent(link)}`
@@ -100,6 +100,7 @@ Page({
    * 初始化加载轮播图、用户信息和需求列表
    */
   onLoad() {
+    console.log('========== 页面加载 ==========')
     this.loadAds()
     this.loadUserInfo()
   },
@@ -109,7 +110,161 @@ Page({
    * 每次显示页面时刷新需求列表，确保数据最新
    */
   onShow() {
+    console.log('========== 页面显示 ==========')
+    
+    // 检查是否需要刷新
+    const needRefresh = wx.getStorageSync('needRefreshDemand')
+    console.log('页面显示 - needRefresh:', needRefresh)
+    
+    if (needRefresh) {
+      // 清除标记
+      wx.removeStorageSync('needRefreshDemand')
+      console.log('页面显示 - 清除 needRefreshDemand 标记')
+    }
+    
+    // 获取当前用户角色
+    const app = getApp()
+    const role = app.globalData.role
+    const openid = app.globalData.openid
+    
+    console.log('页面显示 - 用户角色:', role, 'openid:', openid)
+    
+    // 如果是商户（role === 1），则刷新需求列表
+    if (role === 1) {
+      console.log('页面显示 - 商户，刷新需求列表')
+      this.loadDemandList()
+    } else {
+      console.log('页面显示 - 普通用户，不刷新需求列表')
+    }
+  },
+  
+  /**
+   * 下拉刷新事件
+   * 用户下拉页面时触发，用于刷新需求列表
+   */
+  onPullDownRefresh() {
+    console.log('========== 下拉刷新触发 ==========')
+    
+    // 刷新需求列表
     this.loadDemandList()
+    
+    // 停止下拉刷新动画
+    wx.stopPullDownRefresh()
+  },
+  
+  /**
+   * 检查商户订阅消息授权
+   */
+  checkSubscribeAuth() {
+    const app = getApp()
+    const role = app.globalData.role
+    
+    // 只有商户需要授权
+    if (role !== 1) {
+      return
+    }
+    
+    // 检查本地存储是否已授权
+    const hasAuth = wx.getStorageSync('subscribeAuth')
+    if (hasAuth) {
+      return
+    }
+    
+    // 模板ID（使用单模板方案）
+    const templateId = 'QVS_qFMhHcASgx9Mkmnklr5B9wSVLSP0DfOdYOfTizk' // 替换为实际的模板ID
+    
+    // 调用订阅消息授权
+    wx.requestSubscribeMessage({
+      tmplIds: [templateId],
+      success: (res) => {
+        console.log('订阅消息授权成功:', res)
+        
+        // 检查授权结果
+        if (res[templateId] === 'accept') {
+          // 上报授权结果到云函数
+          this.updateSubscribeAuth(templateId, 1)
+          
+          // 标记已授权
+          wx.setStorageSync('subscribeAuth', true)
+        }
+      },
+      fail: (err) => {
+        console.error('订阅消息授权失败:', err)
+      }
+    })
+  },
+  
+  /**
+   * 上报订阅消息授权结果到云函数
+   * @param {string} templateId - 模板ID
+   * @param {number} authCount - 授权成功的模板数
+   */
+  updateSubscribeAuth(templateId, authCount) {
+    console.log('上报订阅授权结果到云函数')
+    console.log('参数:', { templateId, authCount })
+    
+    wx.cloud.callFunction({
+      name: 'subscribe',
+      data: {
+        action: 'update',
+        templateId: templateId,
+        authCount: authCount
+      },
+      success: (res) => {
+        console.log('上报订阅授权结果成功:', res)
+      },
+      fail: (err) => {
+        console.error('上报订阅授权结果失败:', err)
+      }
+    })
+  },
+  
+  /**
+   * 订阅消息授权按钮点击事件
+   */
+  onSubscribeTap() {
+    console.log('onSubscribeTap 被调用 - 用户点击事件')
+    const app = getApp()
+    const role = app.globalData.role
+    
+    // 只有商户需要授权
+    if (role !== 1) {
+      wx.showToast({ title: '仅商户可订阅', icon: 'none' })
+      return
+    }
+    
+    // 模板ID（使用单模板方案）
+    const templateId = 'QVS_qFMhHcASgx9Mkmnklr5B9wSVLSP0DfOdYOfTizk' // 替换为实际的模板ID
+    
+    console.log('准备调用订阅消息授权')
+    console.log('模板ID:', templateId)
+    
+    // 调用订阅消息授权
+    wx.requestSubscribeMessage({
+      tmplIds: [templateId],
+      success: (res) => {
+        console.log('订阅消息授权成功:', res)
+        
+        // 检查授权结果
+        if (res[templateId] === 'accept') {
+          // 上报授权结果到云函数
+          this.updateSubscribeAuth(templateId, 1)
+          
+          // 标记已授权
+          wx.setStorageSync('subscribeAuth', true)
+          
+          wx.showToast({ title: '订阅成功', icon: 'success' })
+        } else if (res[templateId] === 'reject') {
+          wx.showToast({ title: '已拒绝订阅', icon: 'none' })
+        } else if (res[templateId] === 'ban') {
+          wx.showToast({ title: '已被后台封禁', icon: 'none' })
+        }
+      },
+      fail: (err) => {
+        console.error('订阅消息授权失败:', err)
+        wx.showToast({ title: `授权失败: ${err.errMsg}`, icon: 'none' })
+      }
+    })
   },
 
   /**
@@ -260,7 +415,33 @@ Page({
    * 发布需求事件
    * 用户可以发布新的需求描述
    */
-  onPublish() {
+  async onPublish() {
+    console.log('========== onPublish 被调用 ==========')
+    
+    // 检查登录状态
+    const app = getApp()
+    const isLoggedIn = await app.checkLogin()
+    
+    if (!isLoggedIn) {
+      // 未登录，显示提示
+      wx.showModal({
+        title: '提示',
+        content: '请先登录后再发布需求',
+        confirmText: '去登录',
+        cancelText: '取消',
+        success: (res) => {
+          if (res.confirm) {
+            // 跳转到我的页面
+            wx.navigateTo({
+              url: '/pages/mine/mine'
+            })
+          }
+        }
+      })
+      return
+    }
+    
+    // 已登录，显示发布对话框
     this.showPublishModal()
   },
 
@@ -268,15 +449,30 @@ Page({
    * 显示发布需求对话框
    */
   showPublishModal() {
+    console.log('========== showPublishModal 被调用 ==========')
     wx.showModal({
       title: '发布需求',
       editable: true,
       placeholderText: '请输入您要采购的商品或服务',
       confirmText: '发布',
       success: (res) => {
+        console.log('========== 弹窗回调触发 ==========', res)
         if (res.confirm && res.content) {
-          this.addDemand(res.content)
+          const trimmedContent = res.content.trim()
+          console.log('========== 发布内容 ==========', trimmedContent)
+          if (trimmedContent === '') {
+            console.log('========== 空需求，不发布 ==========')
+            wx.showToast({ title: '空需求不可发布', icon: 'none' })
+            return
+          }
+          console.log('========== 准备调用 addDemand ==========')
+          this.addDemand(trimmedContent)
+        } else {
+          console.log('========== 用户取消或内容为空 ==========')
         }
+      },
+      fail: (err) => {
+        console.error('========== 弹窗失败 ==========', err)
       }
     })
   },
@@ -286,24 +482,36 @@ Page({
    * @param {string} content - 需求内容
    */
   async addDemand(content) {
+    console.log('========== addDemand 被调用 ==========')
     try {
+      console.log('========== addDemand 开始 ==========', content)
       // 显示加载提示
       wx.showLoading({ title: '发布中...' })
 
       // 获取当前用户的 openid
       const app = getApp()
       let openid = app.globalData.openid
+      console.log('========== 获取 openid - globalData ==========', openid)
       
       if (!openid) {
         // 如果 globalData 中没有 openid，从本地缓存获取
         openid = wx.getStorageSync('openid')
+          console.log('========== 获取 openid - 缓存 ==========', openid)
         if (!openid) {
           // 如果本地缓存也没有，提示用户
           wx.hideLoading()
           wx.showToast({ title: '请先登录', icon: 'none' })
+          console.log('========== 发布需求失败: 未登录 ==========')
           return
         }
       }
+
+      console.log('========== 准备调用云函数 - action: add ==========')
+      console.log('========== 参数 ==========', {
+        action: 'add',
+        content: content,
+        user_id: openid
+      })
 
       // 调用云函数
       const result = await wx.cloud.callFunction({
@@ -315,22 +523,32 @@ Page({
         }
       })
 
+      console.log('========== 云函数调用成功 ==========')
+      console.log('========== 云函数返回结果 ==========', result)
+
       // 隐藏加载提示
       wx.hideLoading()
 
       // 处理结果
-      if (result.result.success) {
-        wx.showToast({ title: '发布成功' })
-        this.loadDemandList()
-      } else {
-        wx.showToast({ title: '发布失败', icon: 'none' })
-      }
-    } catch (err) {
-      // 隐藏加载提示
-      wx.hideLoading()
-      // 显示错误信息
-      console.error('发布需求失败:', err)
+    if (result.result && result.result.success) {
+      console.log('========== 发布成功 ==========')
+      wx.showToast({ title: '发布成功' })
+      this.loadDemandList()
+      
+      // 设置全局标记，提示其他页面需要刷新
+      wx.setStorageSync('needRefreshDemand', true)
+      console.log('========== 设置刷新标记 ==========')
+    } else {
+      console.log('========== 发布失败 ==========')
+      console.log('========== 失败原因 ==========', result.result.message)
       wx.showToast({ title: '发布失败', icon: 'none' })
+    }
+    } catch (err) {
+      console.error('========== addDemand 异常 ==========')
+      console.error('========== 异常信息 ==========', err)
+      console.error('========== 异常堆栈 ==========', err.stack)
+      wx.hideLoading()
+      wx.showToast({ title: `发布失败: ${err.message}`, icon: 'none' })
     }
   },
 
@@ -356,6 +574,11 @@ Page({
     // 从 globalData 获取用户信息
     const userInfo = app.globalData.userInfo
     const role = app.globalData.role
+    const openid = app.globalData.openid
+    
+    console.log('加载用户信息 - userInfo:', userInfo)
+    console.log('加载用户信息 - role:', role)
+    console.log('加载用户信息 - openid:', openid)
     
     this.setData({
       isMerchant: role === 1,
@@ -394,6 +617,9 @@ Page({
     } else {
       console.log('加载需求列表 - 商户或 openid 不存在，不传 user_id')
     }
+    
+    console.log('准备调用云函数 - action: list')
+    console.log('参数:', data)
     
     wx.cloud.callFunction({
       name: 'demand',
@@ -436,6 +662,7 @@ Page({
       },
       fail: (err) => {
         console.error('加载需求列表失败:', err)
+        console.error('错误堆栈:', err.stack)
         wx.showToast({ title: '加载失败', icon: 'none' })
       }
     })

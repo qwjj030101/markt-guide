@@ -30,16 +30,27 @@ App({
   // 从本地缓存恢复用户信息
   this.restoreUserInfo()
   
-  // 初始化完成后再调用登录
-  this.login()
+  // 检查隐私协议同意状态
+  const hasAgreedPrivacy = wx.getStorageSync('hasAgreedPrivacy')
+  if (!hasAgreedPrivacy) {
+    // 延迟显示隐私协议，确保小程序初始化完成
+    setTimeout(() => {
+      wx.navigateTo({
+        url: '/pages/privacy/privacy'
+      })
+    }, 500)
+  } else {
+    // 已同意隐私协议，执行登录
+    this.login()
+  }
   /**
   *wx.cloud.callFunction({
   *name: 'seedProductData',
   *success: res => {
   *console.log('商品导入结果', res.result);
   *}
-  *}) 
-*/
+  *})
+  */
   
   },
 
@@ -62,6 +73,12 @@ App({
    * 参考 ARCH.md 6.1 用户登录流程
    */
   login() {
+    // 检查隐私协议同意状态
+    const hasAgreedPrivacy = wx.getStorageSync('hasAgreedPrivacy')
+    if (!hasAgreedPrivacy) {
+      return
+    }
+
     // 步骤1：调用 wx.login 获取临时登录凭证 code
     wx.login({
       success: (res) => {
@@ -71,7 +88,8 @@ App({
             name: 'user',
             data: {
               action: 'login',
-              code: res.code
+              code: res.code,
+              userInfo: this.globalData.userInfo  // 传递用户信息
             }
           }).then((result) => {
             // 步骤3：存储用户信息到 globalData
@@ -149,6 +167,34 @@ App({
    */
   isMerchant() {
     return this.globalData.role === 1
+  },
+
+  /**
+   * 检查登录状态
+   * @returns {Promise<boolean>} 是否已登录
+   */
+  checkLogin() {
+    return new Promise((resolve) => {
+      // 检查 globalData 中是否已有 openid
+      if (this.globalData.openid) {
+        console.log('checkLogin - 已有 openid:', this.globalData.openid)
+        resolve(true)
+        return
+      }
+      
+      // 检查本地缓存中是否有 openid
+      const openid = wx.getStorageSync('openid')
+      if (openid) {
+        this.globalData.openid = openid
+        console.log('checkLogin - 从缓存获取 openid:', openid)
+        resolve(true)
+        return
+      }
+      
+      // 未登录
+      console.log('checkLogin - 未登录')
+      resolve(false)
+    })
   },
 
   /**

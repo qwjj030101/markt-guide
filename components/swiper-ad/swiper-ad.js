@@ -41,11 +41,11 @@ Component({
       const banner = this.properties.banners[index]
       console.log('点击的轮播图数据:', banner)
       
-      if (banner && banner.url) {
-        
-        console.log('跳转到:',banner.url)
-        // 触发 adTap 事件，让父组件处理跳转
-        wx . navigateTo ({url: banner . url})
+      if (banner && (banner.link || banner.url)) {
+        const link = banner.link || banner.url
+        console.log('跳转到:', link)
+        // 直接跳转，保持原有功能
+        wx.navigateTo({url: link})
       } else {
         console.log('轮播图数据或链接不存在')
       }

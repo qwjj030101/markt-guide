@@ -3,9 +3,11 @@
   <view class="user-info">
     <!-- 未授权时显示授权引导 -->
     <view wx:if="{{!isAuthorized}}" class="authorize-guide">
-      <text class="guide-text">授权后可查看个人信息、管理商铺等</text>
+      <image class="default-avatar" src="/images/default-avatar.png" mode="aspectFill"></image>
+      <text class="guide-text">点击下方按钮登录/授权</text>
+      <text class="guide-subtext" wx:if="{{showReauthorize}}">您未授权，无法获取头像和昵称</text>
       <view class="authorize-btn" bindtap="onAuthorizeTap">
-        <text>去授权</text>
+        <text>{{showReauthorize ? '重新授权' : '点击登录/授权'}}</text>
       </view>
     </view>
     <!-- 已授权时显示用户信息 -->
@@ -15,12 +17,12 @@
         <text>...</text>
       </view>
       <view class="user-avatar-container">
-        <image class="user-avatar" src="{{userInfo.avatarUrl || 'https://via.placeholder.com/100'}}" mode="aspectFill"></image>
+        <image class="user-avatar" src="{{userInfo.avatarUrl || '/images/default-avatar.png'}}" mode="aspectFill"></image>
       </view>
       <view class="user-nickname-container">
         <text class="user-nickname">{{userInfo.nickName}}</text>
         <text class="user-days" wx:if="{{isMerchant && isValid}}">店铺到期时间：{{expireDateFormatted}}</text>
-        <text class="user-days" wx:if="{{isMerchant}}">剩余响应次数：{{responseQuota}}</text>
+        <text class="user-days" wx:if="{{isMerchant}}">响应次数：{{responseQuota}}次</text>
         <text class="user-days" wx:if="{{isMerchant && responsePackageExpire}}">响应到期时间：{{responsePackageExpire}}</text>
       </view>
     </view>
@@ -28,28 +30,35 @@
   
   <!-- 下方按钮区域 -->
   <view class="action-buttons">
-    <!-- 我的店铺按钮 -->
-    <view class="btn-shop" bindtap="onShopTap">
-      <text class="btn-text">我的店铺</text>
+    <!-- 第一行按钮 -->
+    <view class="button-row">
+      <!-- 我的店铺按钮 -->
+      <view wx:if="{{isMerchant}}" class="btn-common" bindtap="onShopTap">
+        <text>我的店铺</text>
+      </view>
+      
+      <!-- 成为商户按钮（普通用户） -->
+      <view wx:else class="btn-common" bindtap="onJoinTap">
+        <text>成为商户</text>
+      </view>
+      
+      <!-- 购买响应包按钮 -->
+      <view wx:if="{{isMerchant}}" class="btn-common" bindtap="onBuyTap">
+        <text>购买响应包</text>
+      </view>
     </view>
     
-    <!-- 根据角色显示不同按钮 -->
-    <!-- 商户且会员有效时显示续费按钮（暂时隐藏） -->
-    <view wx:if="{{isMerchant && isValid && false}}" class="btn-renew" bindtap="onRenewTap">
-      <text>续费</text>
-    </view>
-    <!-- 非商户时显示入驻平台按钮 -->
-    <view wx:elif="{{!isMerchant}}" class="btn-join" bindtap="onJoinTap">
-      <text>入驻平台</text>
-    </view>
-    <!-- 商户但会员无效时，不显示任何按钮 -->
-    <view wx:else>
-      <!-- 商户但会员无效时的处理 -->
-    </view>
-    
-    <!-- 购买响应包按钮 -->
-    <view wx:if="{{isMerchant}}" class="btn-buy" bindtap="onBuyTap">
-      <text>购买响应包</text>
+    <!-- 第二行按钮 -->
+    <view class="button-row">
+      <!-- 客服按钮 -->
+      <view class="btn-common">
+        <button open-type="contact" class="contact-btn-common">在线客服</button>
+      </view>
+      
+      <!-- 意见反馈按钮 -->
+      <view class="btn-common" bindtap="onFeedbackTap">
+        <text>意见反馈</text>
+      </view>
     </view>
   </view>
 </view>

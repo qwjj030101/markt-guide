@@ -11,6 +11,10 @@ cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV
 })
 
+// 引入工具函数
+//const dbUtils = require('../utils/dbUtils')
+//const imageUtils = require('../utils/imageUtils')
+
 const db = cloud.database()
 const _ = db.command
 
@@ -364,8 +368,11 @@ async function createShop(params) {
     const openid = wxContext.OPENID
     console.log('createShop - 当前用户 openid:', openid)
     
-    // 处理经纬度字段和分类字段
-    const { lat, lng, market_type, category_type, ...otherData } = shopData
+    // 处理经纬度字段、分类字段和头像字段
+    const { lat, lng, market_type, category_type, avatar, ...otherData } = shopData
+    
+    // 确保 avatar 字段被正确保存
+    console.log('createShop - 头像信息:', avatar)
     
     // 处理市场类型
     let marketTypeValue = null
@@ -412,6 +419,7 @@ async function createShop(params) {
     const result = await db.collection('shop').add({
       data: {
         ...otherData,
+        avatar: avatar, // 保存头像字段
         market_type: marketTypeValue,
         shop_category: categoryTypeValue,
         lat: lat !== undefined ? parseFloat(lat) : null,

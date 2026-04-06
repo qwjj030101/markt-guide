@@ -1,0 +1,9 @@
+{
+  "name": "seedAds",
+  "version": "1.0.0",
+  "description": "初始化广告数据",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}
