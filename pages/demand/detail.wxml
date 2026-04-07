@@ -1,0 +1,41 @@
+<view class="detail-container">
+  <!-- 发布者信息 -->
+  <view class="demand-header">
+    <image class="user-avatar" src="{{demand.user.avatar}}" mode="aspectFill"></image>
+    <text class="user-nickname">{{demand.user.nickName}}</text>
+  </view>
+  
+  <!-- 需求内容 -->
+  <view class="demand-content">{{demand.content}}</view>
+  
+  <!-- 需求图片 -->
+  <view wx:if="{{demand.image}}" class="demand-image" bindtap="previewImage">
+    <image src="{{demand.image}}" mode="aspectFill"></image>
+    <view class="preview-tip">点击预览</view>
+  </view>
+  
+  <!-- 需求状态 -->
+  <view class="demand-status">
+    <text class="status-text">{{demand.status === 0 ? '待响应' : '已完成'}}</text>
+  </view>
+  
+  <!-- 响应列表 -->
+  <view class="response-section">
+    <text class="section-title">响应列表</text>
+    <view wx:if="{{demand.responses && demand.responses.length > 0}}" class="response-list">
+      <view class="response-item" wx:for="{{demand.responses}}" wx:for-item="response" wx:key="shop_id" bindtap="onResponseTap" data-shop-id="{{response.shop_id}}">
+        <image class="response-avatar" src="{{response.shopAvatar}}" mode="aspectFill"></image>
+        <text class="response-remark">{{response.remark}}</text>
+      </view>
+    </view>
+    <view wx:else class="no-response">
+      <text>暂无响应</text>
+    </view>
+  </view>
+  
+  <!-- 操作按钮 -->
+  <view class="action-buttons">
+    <button wx:if="{{demand.isOwn}}" class="btn-complete {{demand.status === 1 ? 'btn-disabled' : ''}}" bindtap="onComplete">已完成</button>
+    <button wx:elif="{{demand.canRespond}}" class="btn-respond {{demand.status === 1 ? 'btn-disabled' : ''}}" bindtap="onRespond">我有货</button>
+  </view>
+</view>

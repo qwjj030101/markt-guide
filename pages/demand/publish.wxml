@@ -1,0 +1,41 @@
+<view class="publish-container">
+  <!-- 页面标题 -->
+  <view class="page-header">
+    <text class="page-title">发布需求</text>
+  </view>
+  
+  <!-- 需求内容输入 -->
+  <view class="content-section">
+    <text class="section-label">需求描述</text>
+    <textarea 
+      class="content-input" 
+      placeholder="请输入您要采购的商品或服务" 
+      value="{{content}}" 
+      bindinput="onContentInput"
+      placeholder-class="placeholder"
+    ></textarea>
+  </view>
+  
+  <!-- 图片上传区域 -->
+  <view class="image-section">
+    <text class="section-label">图片（可选）</text>
+    <view class="image-upload-area">
+      <view wx:if="{{imageUrl}}" class="image-preview">
+        <image src="{{imageUrl}}" mode="aspectFill"></image>
+        <view class="delete-btn" bindtap="deleteImage">
+          <text>删除</text>
+        </view>
+      </view>
+      <view wx:else class="upload-btn" bindtap="chooseImage">
+        <text class="upload-icon">+</text>
+        <text class="upload-text">选择图片</text>
+      </view>
+    </view>
+  </view>
+  
+  <!-- 操作按钮 -->
+  <view class="action-buttons">
+    <button class="btn-cancel" bindtap="onCancel">取消</button>
+    <button class="btn-publish" bindtap="onPublish">发布</button>
+  </view>
+</view>

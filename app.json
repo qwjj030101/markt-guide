@@ -2,6 +2,8 @@
   "pages": [
     "pages/index/index",
     "pages/demand/demand",
+    "pages/demand/publish",
+    "pages/demand/detail",
     "pages/mine/mine",
     "pages/shop/detail",
     "pages/shop/manage",
@@ -11,10 +13,7 @@
     "pages/product/edit",
     "pages/buy/buy",
     "pages/feedback/feedback",
-    "pages/privacy/privacy",
-    "cloudfunctions/ads/index.js",
-    "cloudfunctions/ads/index",
-    "cloudfunctions/ads/package.json"
+    "pages/privacy/privacy"
   ],
   "window": {
     "backgroundTextStyle": "light",

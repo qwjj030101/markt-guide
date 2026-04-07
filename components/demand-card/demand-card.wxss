@@ -31,6 +31,18 @@
   margin-bottom: 20rpx;
 }
 
+.demand-image {
+  margin-bottom: 20rpx;
+  border-radius: 8rpx;
+  overflow: hidden;
+}
+
+.demand-image image {
+  width: 100%;
+  height: 200rpx;
+  object-fit: cover;
+}
+
 .response-list {
   display: flex;
   flex-wrap: wrap;

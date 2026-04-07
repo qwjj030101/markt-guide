@@ -5,17 +5,48 @@ const db = cloud.database();
 exports.main = async (event, context) => {
   try {
     console.log('云函数 demand 接收到的参数:', event);
-    const { action, content, user_id } = event || {};
-    console.log('解析后的参数:', { action, content, user_id });
+    const { action, content, user_id, image, demand_id } = event || {};
+    console.log('解析后的参数:', { action, content, user_id, image, demand_id });
     
     if (action === 'add') {
-       console.log('开始处理 action: add', { content, user_id });
+       console.log('开始处理 action: add', { content, user_id, image });
+      
+      // 参数校验
+      if (!content) {
+        console.error('错误：缺少需求内容');
+        return { success: false, code: 1001, message: '需求内容不能为空' };
+      }
+      
+      if (!user_id) {
+        console.error('错误：缺少用户ID');
+        return { success: false, code: 1001, message: '用户ID不能为空' };
+      }
+      
+      const trimmedContent = content.trim();
+      if (trimmedContent.length === 0) {
+        console.error('错误：需求内容为空');
+        return { success: false, code: 1001, message: '需求内容不能为空' };
+      }
+      
+      // 转换图片URL
+      let imageUrl = image || '';
+      if (imageUrl && imageUrl.startsWith('cloud://')) {
+        try {
+          const tempResult = await cloud.getTempFileURL({ fileList: [imageUrl] });
+          if (tempResult.fileList[0] && tempResult.fileList[0].tempFileURL) {
+            imageUrl = tempResult.fileList[0].tempFileURL;
+          }
+        } catch (tempError) {
+          console.error('获取图片临时URL失败:', tempError);
+        }
+      }
       
       // 插入需求数据
       const result = await db.collection('demand').add({
         data: {
           user_id: user_id,
-          content: content,
+          content: trimmedContent,
+          image: imageUrl,
           status: 0,
           created_at: new Date()
         }
@@ -54,12 +85,16 @@ exports.main = async (event, context) => {
         
         console.log('已授权的商户数量:', authorizedMerchants.length);
         
-        // 对每个已授权的商户发送消息
-        for (const merchant of authorizedMerchants) {
+        // 优化：并行处理消息发送，提高性能
+        const now = new Date();
+        const formattedTime = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+        const demandSummary = content.substring(0, 20) + (content.length > 20 ? '...' : '');
+        
+        console.log('准备并行发送消息给商户，数量:', authorizedMerchants.length);
+        
+        // 并行发送消息
+        const sendPromises = authorizedMerchants.map(async merchant => {
           try {
-            // 准备消息数据
-            const demandSummary = content.substring(0, 20) + (content.length > 20 ? '...' : '');
-            
             // 准备模板ID
             const templateId = merchant.sub_template_ids && merchant.sub_template_ids.length > 0 
               ? merchant.sub_template_ids[0] 
@@ -72,9 +107,6 @@ exports.main = async (event, context) => {
             
             // 发送订阅消息
             try {
-              const now = new Date();
-              const formattedTime = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
-              
               console.log('发送消息前 - 数据:', {
                 thing1: { value: demandSummary },
                 time2: { value: formattedTime },
@@ -93,33 +125,44 @@ exports.main = async (event, context) => {
                     value: formattedTime
                   },
                   thing3: {
-                    value: publisherName
-                  }
+                    value: publisherName }
                 }
               });
               
               console.log('发送订阅消息成功:', sendResult);
               
-              // 发送成功后，减少剩余次数
-              await db.collection('user').where({ openid: merchant.openid }).update({
-                data: {
-                  sub_remains: merchant.sub_remains - 1,
-                  update_time: new Date()
-                }
-              });
-              
-              console.log('更新剩余次数成功:', merchant.openid);
+              // 返回商户信息，用于后续批量更新
+              return { merchant, success: true };
             } catch (sendErr) {
               console.error('发送订阅消息失败:', sendErr);
-              // 继续处理其他商户
-              continue;
+              return { merchant, success: false };
             }
           } catch (err) {
-            console.error('发送订阅消息失败:', err);
-            // 忽略发送失败的商户，继续处理其他商户
-            continue;
+            console.error('处理商户失败:', err);
+            return { merchant, success: false };
           }
-        }
+        });
+        
+        // 等待所有消息发送完成
+        const sendResults = await Promise.all(sendPromises);
+        console.log('所有消息发送完成，成功数量:', sendResults.filter(r => r.success).length);
+        
+        // 优化：批量更新剩余次数
+        const updatePromises = sendResults
+          .filter(result => result.success)
+          .map(({ merchant }) => {
+            console.log('更新剩余次数:', merchant.openid);
+            return db.collection('user').where({ openid: merchant.openid }).update({
+              data: {
+                sub_remains: merchant.sub_remains - 1,
+                update_time: new Date()
+              }
+            });
+          });
+        
+        // 等待所有更新完成
+        await Promise.all(updatePromises);
+        console.log('批量更新剩余次数完成');
       } catch (err) {
         console.error('处理订阅消息失败:', err);
         // 发送消息失败不影响需求发布
@@ -352,6 +395,183 @@ exports.main = async (event, context) => {
         console.error('withdraw action - 撤回失败:', err);
         return { success: false, message: '撤回失败: ' + err.message };
       }
+    } else if (action === 'detail') {
+          // 查询需求详情
+          console.log('开始查询需求详情，demand_id:', demand_id);
+          
+          if (!demand_id) {
+            console.error('错误：缺少需求ID');
+            return { success: false, code: 1001, message: '缺少需求ID' };
+          }
+          
+          // 查询需求基本信息
+          try {
+            const demandResult = await db.collection('demand').doc(demand_id).get();
+            console.log('需求查询结果:', demandResult);
+            
+            if (!demandResult.data) {
+              console.error('错误：需求不存在，demand_id:', demand_id);
+              return { success: false, code: 1002, message: '需求不存在' };
+            }
+            
+            const demand = demandResult.data;
+            console.log('获取到需求数据:', demand);
+            
+            // 查询用户信息
+            let userInfo = {
+              avatar: '/images/R.jpg',
+              nickName: '用户' + String(demand.user_id || '').substring(0, 4)
+            };
+            
+            try {
+              console.log('开始查询用户信息，user_id:', demand.user_id);
+              const userResult = await db.collection('user').where({ openid: demand.user_id }).get();
+              console.log('用户查询结果:', userResult);
+              
+              if (userResult.data.length > 0) {
+                const user = userResult.data[0];
+                let avatar = user.avatar || '/images/R.jpg';
+                // 转换云存储路径
+                if (avatar.startsWith('cloud://')) {
+                  try {
+                    const tempResult = await cloud.getTempFileURL({ fileList: [avatar] });
+                    console.log('用户头像URL转换结果:', tempResult);
+                    if (tempResult.fileList[0].tempFileURL) {
+                      avatar = tempResult.fileList[0].tempFileURL;
+                    }
+                  } catch (avatarError) {
+                    console.error('用户头像URL转换失败:', avatarError);
+                  }
+                }
+                userInfo = {
+                  avatar: avatar,
+                  nickName: user.nickname || '用户' + String(demand.user_id || '').substring(0, 4)
+                };
+                console.log('获取到用户信息:', userInfo);
+              } else {
+                console.warn('未找到用户信息，使用默认值');
+              }
+            } catch (userError) {
+              console.error('查询用户信息失败:', userError);
+              console.warn('使用默认用户信息');
+            }
+            
+            // 查询响应列表
+            const responses = [];
+            try {
+              console.log('开始查询响应列表，demand_id:', demand_id);
+              const responsesResult = await db.collection('response').where({ demand_id: demand_id }).get();
+              console.log('响应查询结果:', responsesResult);
+              
+              // 优化：批量查询商户信息，避免N+1查询问题
+              if (responsesResult.data.length > 0) {
+                // 收集所有商户ID
+                const shopIds = responsesResult.data.map(item => item.shop_id);
+                console.log('需要查询的商户ID列表:', shopIds);
+                
+                // 批量查询商户信息
+                let shopsMap = {};
+                try {
+                  const shopsResult = await db.collection('shop').where({
+                    _id: db.command.in(shopIds)
+                  }).get();
+                  console.log('批量查询商户结果:', shopsResult);
+                  
+                  // 创建商户信息映射
+                  for (const shop of shopsResult.data) {
+                    shopsMap[shop._id] = shop;
+                  }
+                } catch (shopsError) {
+                  console.error('批量查询商户失败:', shopsError);
+                }
+                
+                // 优化：批量转换商户头像URL
+                const cloudPaths = [];
+                for (const shopId of shopIds) {
+                  const shop = shopsMap[shopId];
+                  if (shop && shop.avatar && shop.avatar.startsWith('cloud://')) {
+                    cloudPaths.push(shop.avatar);
+                  }
+                }
+                
+                let tempUrlMap = {};
+                if (cloudPaths.length > 0) {
+                  try {
+                    console.log('批量转换商户头像URL:', cloudPaths);
+                    const tempResult = await cloud.getTempFileURL({ fileList: cloudPaths });
+                    console.log('批量转换结果:', tempResult);
+                    
+                    // 创建URL映射
+                    for (let i = 0; i < cloudPaths.length; i++) {
+                      if (tempResult.fileList[i] && tempResult.fileList[i].tempFileURL) {
+                        tempUrlMap[cloudPaths[i]] = tempResult.fileList[i].tempFileURL;
+                      }
+                    }
+                  } catch (tempError) {
+                    console.error('批量转换商户头像URL失败:', tempError);
+                  }
+                }
+                
+                // 组装响应列表
+                for (const item of responsesResult.data) {
+                  let shopAvatar = '/images/R.jpg';
+                  
+                  const shop = shopsMap[item.shop_id];
+                  if (shop) {
+                    let avatar = shop.avatar || '';
+                    if (avatar.startsWith('cloud://') && tempUrlMap[avatar]) {
+                      shopAvatar = tempUrlMap[avatar];
+                    } else if (avatar.startsWith('http://') || avatar.startsWith('https://')) {
+                      shopAvatar = avatar;
+                    }
+                  }
+                  
+                  responses.push({
+                    shop_id: item.shop_id,
+                    remark: item.remark || '',
+                    shopAvatar: shopAvatar
+                  });
+                }
+              }
+              console.log('获取到响应列表:', responses);
+            } catch (responseError) {
+              console.error('查询响应数据失败:', responseError);
+              console.warn('响应列表为空');
+            }
+            
+            // 转换需求图片URL
+            let imageUrl = demand.image || '';
+            if (imageUrl && imageUrl.startsWith('cloud://')) {
+              try {
+                console.log('开始转换需求图片URL:', imageUrl);
+                const tempResult = await cloud.getTempFileURL({ fileList: [imageUrl] });
+                console.log('图片URL转换结果:', tempResult);
+                if (tempResult.fileList[0].tempFileURL) {
+                  imageUrl = tempResult.fileList[0].tempFileURL;
+                }
+              } catch (tempError) {
+                console.error('获取图片临时URL失败:', tempError);
+                console.warn('使用原图片路径');
+              }
+            }
+            
+            // 组装最终数据
+            const detailData = {
+              ...demand,
+              image: imageUrl,
+              user: userInfo,
+              responses: responses
+            };
+            
+            console.log('查询需求详情结果:', detailData);
+            return {
+              success: true,
+              data: detailData
+            };
+          } catch (error) {
+            console.error('查询需求详情失败:', error);
+            return { success: false, code: 1000, message: '查询失败，请重试' };
+          }
     } else if (action === 'list') {
       // 查询需求列表
       let query = db.collection('demand');
@@ -428,20 +648,27 @@ exports.main = async (event, context) => {
         }
       }
       
-      // 收集所有需要转换的云存储路径
+      // 收集所有需要转换的云存储路径（限制数量，避免超时）
       const cloudPaths = [];
       
       // 收集用户头像
       for (const user of Object.values(usersMap)) {
-        if (user.avatar && user.avatar.startsWith('cloud://')) {
+        if (user.avatar && user.avatar.startsWith('cloud://') && cloudPaths.length < 50) {
           cloudPaths.push(user.avatar);
         }
       }
       
       // 收集商户头像
       for (const shop of Object.values(shopsMap)) {
-        if (shop.avatar && shop.avatar.startsWith('cloud://')) {
+        if (shop.avatar && shop.avatar.startsWith('cloud://') && cloudPaths.length < 50) {
           cloudPaths.push(shop.avatar);
+        }
+      }
+      
+      // 收集需求图片
+      for (const demand of demandList) {
+        if (demand.image && demand.image.startsWith('cloud://') && cloudPaths.length < 50) {
+          cloudPaths.push(demand.image);
         }
       }
       
@@ -510,15 +737,29 @@ exports.main = async (event, context) => {
             });
           }
           
+          // 转换需求图片URL
+          let imageUrl = demand.image || '';
+          if (imageUrl && imageUrl.startsWith('cloud://') && tempUrlMap[imageUrl]) {
+            imageUrl = tempUrlMap[imageUrl];
+          }
+          
           demandsWithUserInfo.push({
             ...demand,
+            image: imageUrl,
             user: userInfo,
             responses: responses
           });
         } catch (error) {
           console.error('处理需求失败:', error);
+          // 转换需求图片URL
+          let imageUrl = demand.image || '';
+          if (imageUrl && imageUrl.startsWith('cloud://') && tempUrlMap[imageUrl]) {
+            imageUrl = tempUrlMap[imageUrl];
+          }
+          
           demandsWithUserInfo.push({
             ...demand,
+            image: imageUrl,
             user: {
               avatar: '/images/R.jpg',
               nickName: '用户' + String(demand.user_id || '').substring(0, 4)

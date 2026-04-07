@@ -1,26 +1,31 @@
-<view class="demand-card">
+<view class="demand-card" bindtap="onCardTap" data-demand-id="{{convertedDemand.id}}">
   <!-- 发布者信息 -->
   <view class="demand-header">
-    <image class="user-avatar" src="{{demand.user.avatar}}" mode="aspectFill"></image>
-    <text class="user-nickname">{{demand.user.nickName}}</text>
+    <image class="user-avatar" src="{{convertedDemand.user.avatar || '/images/R.jpg'}}" mode="aspectFill"></image>
+    <text class="user-nickname">{{convertedDemand.user.nickName}}</text>
   </view>
   
   <!-- 需求内容 -->
-  <view class="demand-content">{{demand.content}}</view>
+  <view class="demand-content">{{convertedDemand.content}}</view>
+  
+  <!-- 需求图片 -->
+  <view wx:if="{{convertedDemand.image && convertedDemand.image !== ''}}" class="demand-image">
+    <image src="{{convertedDemand.image}}" mode="aspectFill"></image>
+  </view>
   
   <!-- 响应列表 -->
   <view class="response-list">
-    <view class="response-item" wx:for="{{displayResponses}}" wx:for-item="response" wx:key="shopId" bindtap="onTapShop" data-shop-id="{{response.shopId}}">
-      <image class="response-avatar" src="{{response.shopAvatar}}" mode="aspectFill"></image>
+    <view class="response-item" wx:for="{{displayResponses}}" wx:for-item="response" wx:key="shopId" catchtap="onTapShop" data-shop-id="{{response.shopId}}">
+      <image class="response-avatar" src="{{response.shopAvatar || '/images/R.jpg'}}" mode="aspectFill"></image>
       <text class="response-remark">{{response.remark}}</text>
     </view>
-    <text class="more-response" wx:if="{{demand.responses.length > 3 && displayResponses.length > 0}}" bindtap="toggleShowMore">{{showMore ? '收起' : '...等' + demand.responses.length + '人响应'}}</text>
+    <text class="more-response" wx:if="{{convertedDemand.responses.length > 3 && displayResponses.length > 0}}" catchtap="toggleShowMore">{{showMore ? '收起' : '...等' + convertedDemand.responses.length + '人响应'}}</text>
   </view>
   
   <!-- 操作按钮 -->
   <view class="demand-actions">
-  <button wx:if="{{demand.isOwn}}" class="btn-complete {{demand.status === 1 ? 'btn-disabled' : ''}}" bindtap="onTapComplete" data-demand-id="{{demand.id}}">已完成</button>
-  <button wx:elif="{{demand.hasResponded && demand.status === 0}}" class="btn-withdraw" bindtap="onTapWithdraw" data-demand-id="{{demand.id}}">撤回</button>
-  <button wx:elif="{{demand.canRespond}}" class="btn-respond {{demand.status === 1 ? 'btn-disabled' : ''}}" bindtap="onTapResponse" data-demand-id="{{demand.id}}">我有货</button>
+  <button wx:if="{{convertedDemand.isOwn}}" class="btn-complete {{convertedDemand.status === 1 ? 'btn-disabled' : ''}}" catchtap="onTapComplete" data-demand-id="{{convertedDemand.id}}">已完成</button>
+  <button wx:elif="{{convertedDemand.hasResponded && convertedDemand.status === 0}}" class="btn-withdraw" catchtap="onTapWithdraw" data-demand-id="{{convertedDemand.id}}">撤回</button>
+  <button wx:elif="{{convertedDemand.canRespond}}" class="btn-respond {{convertedDemand.status === 1 ? 'btn-disabled' : ''}}" catchtap="onTapResponse" data-demand-id="{{convertedDemand.id}}">我有货</button>
 </view>
 </view>

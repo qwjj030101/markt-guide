@@ -1,3 +1,5 @@
+import { getImageUrl, getImageUrls } from '../../utils/upload';
+
 Component({
   /**
    * 组件的属性列表
@@ -9,10 +11,8 @@ Component({
       observer: function(newVal, oldVal) {
         console.log('需求卡片接收到数据:', newVal);
         console.log('需求卡片 - hasResponded:', newVal.hasResponded, 'status:', newVal.status);
-        // 只在 demand 对象变化时更新显示的响应列表
-        this.setData({ showMore: false }, () => {
-          this.updateDisplayResponses();
-        });
+        // 转换图片URL
+        this.convertImageUrls(newVal);
       }
     },
     userQuota: {
@@ -30,7 +30,8 @@ Component({
    */
   data: {
     showMore: false, // true=显示部分响应（显示"更多"），false=显示全部响应（显示"收起"）
-    displayResponses: [] // 要显示的响应列表
+    displayResponses: [], // 要显示的响应列表
+    convertedDemand: {} // 转换后的需求数据
   },
 
   /**
@@ -103,9 +104,61 @@ Component({
     /**
      * 更新显示的响应列表
      */
+    async convertImageUrls(demand) {
+      try {
+        const { showMore } = this.data;
+        
+        // 转换用户头像
+        let userAvatar = '/images/R.jpg';
+        if (demand.user && demand.user.avatar) {
+          userAvatar = await getImageUrl(demand.user.avatar);
+        }
+        
+        // 转换需求图片
+        let demandImage = '';
+        if (demand.image) {
+          demandImage = await getImageUrl(demand.image);
+        }
+        
+        // 转换响应列表中的商户头像
+        const responses = demand.responses || [];
+        const responseAvatars = responses.map(r => r.shopAvatar || '');
+        const convertedAvatars = await getImageUrls(responseAvatars);
+        
+        const convertedResponses = responses.map((response, index) => ({
+          ...response,
+          shopAvatar: convertedAvatars[index]
+        }));
+        
+        // 构建转换后的需求数据
+        const convertedDemand = {
+          ...demand,
+          user: {
+            ...(demand.user || {}),
+            avatar: userAvatar
+          },
+          image: demandImage,
+          responses: convertedResponses
+        };
+        
+        this.setData({ 
+          convertedDemand: convertedDemand,
+          displayResponses: showMore ? convertedResponses : convertedResponses.slice(0, 3)
+        });
+      } catch (error) {
+        console.error('转换图片URL失败:', error);
+        // 转换失败时使用原始数据
+        this.setData({ 
+          convertedDemand: demand,
+          displayResponses: demand.responses || []
+        });
+      }
+    },
+    
     updateDisplayResponses() {
-      const { demand, showMore } = this.data;
-      const responses = demand.responses || [];
+      const { convertedDemand } = this.data;
+      const { showMore } = this.data;
+      const responses = convertedDemand.responses || [];
       
       if (showMore) {
         // 显示全部响应
@@ -128,6 +181,14 @@ Component({
       this.setData({ showMore: !showMore }, () => {
         this.updateDisplayResponses();
       });
+    },
+
+    /**
+     * 卡片点击事件
+     */
+    onCardTap(e) {
+      const demandId = e.currentTarget.dataset.demandId;
+      this.triggerEvent('tapCard', { demand_id: demandId });
     }
   }
 })

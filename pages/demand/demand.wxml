@@ -21,6 +21,7 @@
       bind:tapComplete="onTapComplete" 
       bind:tapWithdraw="onDemandWithdraw"
       bind:needBuy="onNeedBuy"
+      bind:tapCard="onDemandCardTap"
     />
   </view>
   <view class="publish-btn"  bindtap="onPublish">

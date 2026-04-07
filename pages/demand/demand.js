@@ -641,16 +641,17 @@ Page({
             
             return {
               id: item._id,
-              user: item.user || { // 使用云函数返回的用户信息
+              user: (item.user && typeof item.user === 'object' && Object.keys(item.user).length > 0) ? item.user : { // 确保user对象不为空
                 avatar: '/images/R.jpg',
-                nickName: '用户' + item.user_id.substring(0, 4)
+                nickName: '用户' + (item.user_id || '').substring(0, 4)
               },
-              content: item.content,
-              responses: item.responses || [], // 如果没有响应，设置为空数组
+              content: item.content || '', // 确保内容不为空
+              image: item.image || '', // 需求图片
+              responses: Array.isArray(item.responses) ? item.responses : [], // 确保响应是数组
               isOwn: item.user_id === openid, // 判断是否是当前用户发布的
               canRespond: role === 1 && item.user_id !== openid, // 商户可以响应不是自己发布的需求
-              hasResponded: hasResponded, // 当前商户是否已响应
-              status: item.status
+              hasResponded: Boolean(hasResponded), // 确保是布尔值
+              status: item.status || 0 // 确保状态有默认值
             }
           })
           
@@ -700,7 +701,7 @@ Page({
    * @param {Object} e - 事件对象
    */
   onNeedBuy(e) {
-    const demandId = e.detail.demand_id
+    const demandId = e.detail.demand_id;
     
     wx.showModal({
       title: '响应配额不足',
@@ -711,9 +712,44 @@ Page({
         if (res.confirm) {
           wx.navigateTo({
             url: `/pages/buy/buy?demand_id=${demandId}`
-          })
+          });
         }
       }
-    })
+    });
+  },
+
+  /**
+   * 需求卡片点击事件
+   * 跳转到需求详情页
+   * @param {Object} e - 事件对象，包含需求ID
+   */
+  onDemandCardTap(e) {
+    const demandId = e.detail.demand_id;
+    wx.navigateTo({
+      url: `/pages/demand/detail?demand_id=${demandId}`
+    });
+  },
+
+  /**
+   * 卡片点击事件
+   * @param {Object} e - 事件对象
+   
+  onCardTap(e) {
+    const demandId = e.detail.demand_id;
+    wx.navigateTo({
+      url: `/pages/demand/detail?id=${demandId}`
+    });
+  },
+  */
+
+  /**
+   * 显示发布需求对话框
+   */
+  showPublishModal() {
+    console.log('========== showPublishModal 被调用 ==========');
+    // 跳转到发布需求页面
+    wx.navigateTo({
+      url: '/pages/demand/publish'
+    });
   }
 })

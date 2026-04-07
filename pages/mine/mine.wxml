@@ -3,7 +3,7 @@
   <view class="user-info">
     <!-- 未授权时显示授权引导 -->
     <view wx:if="{{!isAuthorized}}" class="authorize-guide">
-      <image class="default-avatar" src="/images/default-avatar.png" mode="aspectFill"></image>
+      <image class="default-avatar" src="/images/R.jpg" mode="aspectFill"></image>
       <text class="guide-text">点击下方按钮登录/授权</text>
       <text class="guide-subtext" wx:if="{{showReauthorize}}">您未授权，无法获取头像和昵称</text>
       <view class="authorize-btn" bindtap="onAuthorizeTap">
@@ -17,7 +17,7 @@
         <text>...</text>
       </view>
       <view class="user-avatar-container">
-        <image class="user-avatar" src="{{userInfo.avatarUrl || '/images/default-avatar.png'}}" mode="aspectFill"></image>
+        <image class="user-avatar" src="{{userInfo.avatarUrl || '/images/R.jpg'}}" mode="aspectFill"></image>
       </view>
       <view class="user-nickname-container">
         <text class="user-nickname">{{userInfo.nickName}}</text>
