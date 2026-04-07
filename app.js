@@ -29,17 +29,26 @@ App({
 
   // 从本地缓存恢复用户信息
   this.restoreUserInfo()
-  
+
+ 
+
   // 检查隐私协议同意状态
   const hasAgreedPrivacy = wx.getStorageSync('hasAgreedPrivacy')
+  console.log('hasAgreedPrivacy:', hasAgreedPrivacy)
   if (!hasAgreedPrivacy) {
-    // 延迟显示隐私协议，确保小程序初始化完成
-    setTimeout(() => {
-      wx.navigateTo({
-        url: '/pages/privacy/privacy'
-      })
-    }, 500)
+    console.log('未同意隐私协议，显示隐私协议页面')
+    // 直接显示隐私协议页面，不使用延迟
+    wx.redirectTo({
+      url: '/pages/privacy/privacy',
+      success: function(res) {
+        console.log('导航到隐私协议页面成功')
+      },
+      fail: function(err) {
+        console.error('导航到隐私协议页面失败:', err)
+      }
+    })
   } else {
+    console.log('已同意隐私协议，执行登录')
     // 已同意隐私协议，执行登录
     this.login()
   }

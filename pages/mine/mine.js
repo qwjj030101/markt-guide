@@ -147,10 +147,10 @@ Page({
    * 跳转到入驻申请页面
    */
   async onJoinTap() {
-    // 检查登录状态
     const app = getApp()
-    const isLoggedIn = await app.checkLogin()
     
+    // 检查登录状态
+    const isLoggedIn = await app.checkLogin()
     if (!isLoggedIn) {
       // 未登录，显示提示
       wx.showModal({
@@ -168,7 +168,28 @@ Page({
       return
     }
     
-    // 已登录，跳转到入驻申请页面
+    // 检查授权状态（是否有用户信息）
+    const userInfo = app.globalData.userInfo
+    const isAuthorized = userInfo && userInfo.nickName && (userInfo.nickName !== '微信用户' || userInfo.avatarUrl)
+    
+    if (!isAuthorized) {
+      // 未授权，显示提示
+      wx.showModal({
+        title: '提示',
+        content: '请先授权登录，完善个人信息后再申请成为商户',
+        confirmText: '去授权',
+        cancelText: '取消',
+        success: (res) => {
+          if (res.confirm) {
+            // 引导用户点击授权按钮
+            this.onAuthorizeTap()
+          }
+        }
+      })
+      return
+    }
+    
+    // 已登录且已授权，跳转到入驻申请页面
     wx.navigateTo({
       url: '/pages/join/join'
     })
@@ -366,6 +387,7 @@ Page({
           responseQuota: userData.response_quota || 0,
           responsePackageExpire: isResponsePackageValid ? responsePackageExpireFormatted : '',
           isAuthorized: isAuthorized  // 判断是否已授权
+          //isAuthorized: false  // 强制设置为 false，测试授权流程
         })
       } else {
         // 如果获取失败，使用全局数据

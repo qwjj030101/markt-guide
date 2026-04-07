@@ -11,6 +11,7 @@
     "pages/product/edit",
     "pages/buy/buy",
     "pages/feedback/feedback",
+    "pages/privacy/privacy",
     "cloudfunctions/ads/index.js",
     "cloudfunctions/ads/index",
     "cloudfunctions/ads/package.json"
